@@ -5,9 +5,12 @@ import { serve } from "@hono/node-server"
 import auth from "./routes/auth"
 import loanRoutes from "./routes/loans"
 import trusteeRoutes from "./routes/trustees"
+import trusteeAppRoutes from "./routes/trustee-app"
 import installmentRoutes from "./routes/installments"
 import messageRoutes from "./routes/completion-messages"
 import borrowerRoutes from "./routes/borrower"
+import borrowerAppRoutes from "./routes/borrower-app"
+import lenderAppRoutes from "./routes/lender-applications"
 import invitationRoutes from "./routes/loan-invitations"
 import ratingRoutes from "./routes/lender-ratings"
 
@@ -21,9 +24,12 @@ app.get("/health", (c) => c.json({ status: "ok", timestamp: new Date().toISOStri
 app.route("/auth", auth)
 app.route("/loans", loanRoutes)
 app.route("/trustees", trusteeRoutes)
+app.route("/trustee-app", trusteeAppRoutes)
 app.route("/installments", installmentRoutes)
 app.route("/completion-messages", messageRoutes)
 app.route("/borrower", borrowerRoutes)
+app.route("/borrower-app", borrowerAppRoutes)
+app.route("/lender-app", lenderAppRoutes)
 app.route("/invitations", invitationRoutes)
 app.route("/lender-ratings", ratingRoutes)
 

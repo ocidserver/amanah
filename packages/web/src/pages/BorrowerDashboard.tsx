@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router-dom"
 import { api } from "../lib/api"
 import { formatCurrency, formatDate } from "../lib/utils"
-import { BORROWER_TIER_LABELS } from "@amanah/shared"
+import { LOAN_PURPOSE, BORROWER_TIER_LABELS } from "@amanah/shared"
 import type { ILoan, BorrowerTier } from "@amanah/shared"
-import { IconWallet, IconCheck, IconChevronRight, IconClock } from "../components/Icons"
+import { IconWallet, IconCheck, IconChevronRight, IconClock, IconPlus } from "../components/Icons"
 import { useAuth } from "../hooks/use-auth"
 
 export default function BorrowerDashboard() {
@@ -18,6 +18,8 @@ export default function BorrowerDashboard() {
   const loans = data?.loans ?? []
   const activeLoans = loans.filter((l) => l.status === "active")
   const completedLoans = loans.filter((l) => l.status === "completed")
+  const pendingLoans = loans.filter((l) => l.status === "pending")
+  const approvedLoans = loans.filter((l) => l.status === "approved")
   const totalBorrowing = activeLoans.reduce((s, l) => s + l.amount, 0)
   const totalPaid = completedLoans.reduce((s, l) => s + l.amount, 0)
 
@@ -59,6 +61,52 @@ export default function BorrowerDashboard() {
         </div>
       )}
 
+      <Link
+        to="/borrower/pengajuan"
+        className="flex items-center justify-center gap-2 w-full bg-[var(--color-primary)] text-white py-3 rounded-xl font-semibold mb-6 active:scale-[0.99] transition-transform"
+      >
+        <IconPlus className="w-5 h-5" />
+        Ajukan Pinjaman
+      </Link>
+
+      {(pendingLoans.length > 0 || approvedLoans.length > 0) && (
+        <>
+          <h3 className="font-semibold text-gray-900 mb-3">Status Pengajuan</h3>
+          <div className="space-y-2 mb-6">
+            {pendingLoans.map((loan) => (
+              <Link
+                key={loan.id}
+                to={`/borrower/pinjaman/${loan.id}`}
+                className="block bg-amber-50 border border-amber-200 rounded-xl p-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">Menunggu</span>
+                    <p className="text-sm font-bold text-gray-900 mt-1">{formatCurrency(loan.amount)}</p>
+                  </div>
+                  <IconChevronRight className="w-5 h-5 text-amber-400" />
+                </div>
+              </Link>
+            ))}
+            {approvedLoans.map((loan) => (
+              <Link
+                key={loan.id}
+                to={`/borrower/pinjaman/${loan.id}`}
+                className="block bg-green-50 border border-green-200 rounded-xl p-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Disetujui</span>
+                    <p className="text-sm font-bold text-gray-900 mt-1">{formatCurrency(loan.amount)}</p>
+                  </div>
+                  <IconChevronRight className="w-5 h-5 text-green-400" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
+
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-semibold text-gray-900">Pinjaman Saya</h3>
       </div>
@@ -75,14 +123,14 @@ export default function BorrowerDashboard() {
             <IconWallet className="w-6 h-6 text-gray-300" />
           </div>
           <p className="text-gray-400 text-sm">Belum ada pinjaman</p>
-          <p className="text-gray-400 text-xs mt-1">Minta pemberi pinjaman untuk mengundang Anda</p>
+          <p className="text-gray-400 text-xs mt-1">Ajukan pinjaman pertama Anda sekarang</p>
         </div>
       ) : (
         <div className="space-y-3">
           {loans.slice(0, 5).map((loan) => (
             <Link
               key={loan.id}
-              to={`/borrower/loans/${loan.id}`}
+              to={`/borrower/pinjaman/${loan.id}`}
               className="block bg-white rounded-2xl border border-gray-100 p-4 active:scale-[0.99] transition-transform"
             >
               <div className="flex items-center justify-between">
@@ -91,25 +139,23 @@ export default function BorrowerDashboard() {
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${
                       loan.status === "active" ? "bg-green-50 text-green-700" :
                       loan.status === "completed" ? "bg-blue-50 text-blue-700" :
+                      loan.status === "pending" ? "bg-amber-50 text-amber-700" :
+                      loan.status === "approved" ? "bg-emerald-50 text-emerald-700" :
+                      loan.status === "rejected" ? "bg-red-50 text-red-700" :
                       "bg-gray-50 text-gray-600"
                     }`}>
-                      {loan.status === "active" ? "Aktif" : loan.status === "completed" ? "Lunas" : loan.status}
+                      {loan.status === "active" ? "Aktif" : loan.status === "completed" ? "Lunas" : loan.status === "pending" ? "Menunggu" : loan.status === "approved" ? "Disetujui" : loan.status === "rejected" ? "Ditolak" : loan.status}
                     </span>
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                      {loan.purpose === "business_capital" ? "Modal Usaha" :
-                       loan.purpose === "home_repair" ? "Renovasi" :
-                       loan.purpose === "consumables" ? "Konsumtif" :
-                       loan.purpose === "education" ? "Pendidikan" :
-                       loan.purpose === "health" ? "Kesehatan" :
-                       loan.purpose === "urgent_needs" ? "Mendesak" : "Ibadah"}
+                      {LOAN_PURPOSE[loan.purpose as keyof typeof LOAN_PURPOSE] || loan.purpose}
                     </span>
                   </div>
                   <p className="text-lg font-bold text-gray-900">{formatCurrency(loan.amount)}</p>
                   <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
-                    <span>{loan.duration_months} bulan</span>
+                    <span>{loan.durationMonths} bulan</span>
                     <span className="flex items-center gap-0.5">
                       <IconClock className="w-3 h-3" />
-                      {formatDate(loan.created_at)}
+                      {formatDate(loan.createdAt)}
                     </span>
                   </div>
                 </div>

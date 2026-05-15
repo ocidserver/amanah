@@ -41,32 +41,31 @@ export async function sendWelcomeEmail(email: string, displayName: string | null
   )
 }
 
-export async function sendLoanCreatedEmail(email: string, loanCode: string, amount: number, borrowerAlias: string): Promise<void> {
+export async function sendLoanCreatedEmail(email: string, borrowerAlias: string, amount: number, loanId: string): Promise<void> {
   const formattedAmount = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount)
   await sendEmail(
     email,
-    `Pinjaman ${loanCode} Berhasil Dibuat`,
+    `Pinjaman Berhasil Dibuat`,
     `
     <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto;">
       <h2 style="color: #1B4332;">Pinjaman Berhasil Dibuat</h2>
-      <p>Kode Amanah: <strong>${loanCode}</strong></p>
       <p>Peminjam: <strong>${borrowerAlias}</strong></p>
       <p>Nominal: <strong>${formattedAmount}</strong></p>
-      <p style="color: #64748B;">Bagikan kode amanah ini kepada peminjam agar mereka bisa melacak cicilan.</p>
+      <p style="color: #64748B;">Anda bisa melihat detail pinjaman di aplikasi Amanah.</p>
     </div>
     `
   )
 }
 
-export async function sendPaymentReminderEmail(email: string, loanCode: string, amount: number, periodLabel: string, dueDate: string): Promise<void> {
+export async function sendPaymentReminderEmail(email: string, borrowerAlias: string, amount: number, periodLabel: string, dueDate: string): Promise<void> {
   const formattedAmount = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount)
   await sendEmail(
     email,
-    `Pengingat Cicilan ${loanCode}`,
+    `Pengingat Cicilan`,
     `
     <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto;">
       <h2 style="color: #1B4332;">Pengingat Cicilan</h2>
-      <p>Cicilan untuk pinjaman <strong>${loanCode}</strong> akan jatuh tempo.</p>
+      <p>Cicilan untuk pinjaman <strong>${borrowerAlias}</strong> akan jatuh tempo.</p>
       <p>Periode: <strong>${periodLabel}</strong></p>
       <p>Nominal: <strong>${formattedAmount}</strong></p>
       <p>Jatuh tempo: <strong>${dueDate}</strong></p>
@@ -76,15 +75,15 @@ export async function sendPaymentReminderEmail(email: string, loanCode: string, 
   )
 }
 
-export async function sendPaymentConfirmedEmail(email: string, loanCode: string, periodLabel: string, amount: number): Promise<void> {
+export async function sendPaymentConfirmedEmail(email: string, periodLabel: string, amount: number): Promise<void> {
   const formattedAmount = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount)
   await sendEmail(
     email,
-    `Cicilan ${periodLabel} Lunas - ${loanCode}`,
+    `Cicilan ${periodLabel} Lunas`,
     `
     <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto;">
       <h2 style="color: #1B4332;">Cicilan Dikonfirmasi</h2>
-      <p>Cicilan <strong>${periodLabel}</strong> untuk pinjaman <strong>${loanCode}</strong> telah dikonfirmasi lunas.</p>
+      <p>Cicilan <strong>${periodLabel}</strong> telah dikonfirmasi lunas.</p>
       <p>Nominal: <strong>${formattedAmount}</strong></p>
     </div>
     `
@@ -105,15 +104,15 @@ export async function sendTrusteeInvitationEmail(email: string, lenderName: stri
   )
 }
 
-export async function sendLoanCompletedEmail(email: string, loanCode: string, amount: number): Promise<void> {
+export async function sendLoanCompletedEmail(email: string, borrowerAlias: string, amount: number): Promise<void> {
   const formattedAmount = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount)
   await sendEmail(
     email,
-    `Pinjaman ${loanCode} Lunas!`,
+    `Pinjaman Lunas!`,
     `
     <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto;">
       <h2 style="color: #1B4332;">Pinjaman Lunas!</h2>
-      <p>Semua cicilan untuk pinjaman <strong>${loanCode}</strong> telah lunas.</p>
+      <p>Semua cicilan untuk pinjaman <strong>${borrowerAlias}</strong> telah lunas.</p>
       <p>Total: <strong>${formattedAmount}</strong></p>
       <p style="color: #64748B;">Semoga Allah membalas kebaikan Anda.</p>
     </div>

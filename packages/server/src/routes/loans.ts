@@ -3,12 +3,12 @@ import { eq, and, desc } from "drizzle-orm"
 import { zValidator } from "@hono/zod-validator"
 import { z } from "zod"
 import { db } from "../db"
-import { loans, installments, users, loanInvitations } from "../db/schema"
+import { loans, installments, users, loanInvitations, trusteeRequests } from "../db/schema"
 import { generateInvitationToken } from "../lib/utils"
 import { authMiddleware, AuthEnv } from "../middleware/auth"
 import { lenderOnlyMiddleware } from "../middleware/role"
 import { checkBorrowingLimit } from "../lib/tiers"
-import { sendLoanInvitationEmail } from "../lib/email"
+import { sendLoanInvitationEmail, sendLoanCreatedEmail } from "../lib/email"
 
 const loanRoutes = new Hono<AuthEnv>()
 
@@ -17,7 +17,7 @@ const createLoanSchema = z.object({
   amount: z.number().int().positive(),
   durationMonths: z.number().int().positive(),
   installmentType: z.enum(["monthly", "weekly", "lump_sum", "flexible"]).default("monthly"),
-  purpose: z.enum(["business_capital", "home_repair", "consumables", "education", "health", "urgent_needs", "worship"]).default("urgent_needs"),
+  purpose: z.enum(["business_capital", "home", "consumables", "education", "health", "urgent_needs", "family_needs", "debt_consolidation"]).default("urgent_needs"),
   collateralType: z.enum(["document", "valuables", "letter", "none"]).default("none"),
   trusteeId: z.string().uuid().optional(),
   borrowerEmail: z.string().email().optional(),
@@ -84,10 +84,10 @@ loanRoutes.post("/", zValidator("json", createLoanSchema), async (c) => {
     .returning()
 
   if (body.installmentType !== "lump_sum" && body.installmentType !== "flexible") {
-    const installmentAmount = Math.ceil(body.amount / body.durationMonths)
-    const startDate = new Date(newLoan.startDate)
-    for (let i = 0; i < body.durationMonths; i++) {
-      const dueDate = new Date(startDate)
+const installmentAmount = Math.ceil(body.amount / body.durationMonths)
+  const startDate = newLoan.startDate ? new Date(newLoan.startDate) : new Date()
+  for (let i = 0; i < body.durationMonths; i++) {
+    const dueDate = new Date(startDate)
       if (body.installmentType === "monthly") {
         dueDate.setMonth(dueDate.getMonth() + i + 1)
       } else {
@@ -128,10 +128,29 @@ loanRoutes.post("/", zValidator("json", createLoanSchema), async (c) => {
     ).catch(() => {})
   }
 
+  const [lenderUser] = await db.select({ email: users.email, displayName: users.displayName }).from(users).where(eq(users.id, user.userId))
+
+  sendLoanCreatedEmail(
+    lenderUser?.email ?? "",
+    newLoan.borrowerAlias,
+    newLoan.amount,
+    newLoan.id
+  ).catch(() => {})
+
+  if (body.trusteeId && body.collateralType !== "none") {
+    await db.insert(trusteeRequests).values({
+      loanId: newLoan.id,
+      trusteeId: body.trusteeId,
+      status: "pending",
+    })
+  }
+
   const freshLoan = await db.select().from(loans).where(eq(loans.id, newLoan.id))
   const loanInstallments = await db.select().from(installments).where(eq(installments.loanId, newLoan.id)).orderBy(installments.dueDate)
 
-  return c.json({ loan: freshLoan[0], installments: loanInstallments }, 201)
+  const invitationSent = !!(body.borrowerEmail && !borrowerId)
+
+  return c.json({ loan: freshLoan[0], installments: loanInstallments, invitationSent }, 201)
 })
 
 loanRoutes.get("/:id", async (c) => {
@@ -190,6 +209,52 @@ loanRoutes.get("/search-borrower", authMiddleware, lenderOnlyMiddleware, async (
       maxBorrowingAmount: maxAmount,
     }
   })
+})
+
+const updateStatusSchema = z.object({
+  status: z.enum(["cancelled", "defaulted", "active", "approved", "rejected"]),
+})
+
+loanRoutes.patch("/:id/status", authMiddleware, lenderOnlyMiddleware, zValidator("json", updateStatusSchema), async (c) => {
+  const user = c.get("user")
+  const id = c.req.param("id")!
+  const { status } = c.req.valid("json")
+
+  const [loan] = await db.select().from(loans).where(and(eq(loans.id, id), eq(loans.lenderId, user.userId)))
+  if (!loan) {
+    return c.json({ error: "Pinjaman tidak ditemukan" }, 404)
+  }
+
+  if (status === "cancelled") {
+    if (loan.status !== "active" && loan.status !== "approved" && loan.status !== "pending") {
+      return c.json({ error: "Hanya pinjaman aktif, disetujui, atau menunggu yang bisa dibatalkan" }, 400)
+    }
+  } else if (status === "defaulted") {
+    if (loan.status !== "active") {
+      return c.json({ error: "Hanya pinjaman aktif yang bisa ditandai gagal bayar" }, 400)
+    }
+  } else if (status === "active") {
+    if (loan.status !== "approved") {
+      return c.json({ error: "Hanya pinjaman yang disetujui yang bisa diaktifkan" }, 400)
+    }
+  }
+
+  const updateData: Record<string, unknown> = { status, updatedAt: new Date() }
+  if (status === "active" && !loan.startDate) {
+    updateData.startDate = new Date().toISOString().split("T")[0]
+  }
+
+  await db.update(loans).set(updateData).where(eq(loans.id, id))
+
+  if (status === "cancelled") {
+    await db.update(installments)
+      .set({ status: "unpaid" })
+      .where(and(eq(installments.loanId, id), eq(installments.status, "unpaid")))
+  }
+
+  const [updatedLoan] = await db.select().from(loans).where(eq(loans.id, id))
+
+  return c.json({ loan: updatedLoan })
 })
 
 export default loanRoutes

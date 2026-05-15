@@ -4,16 +4,18 @@ import { useState } from "react"
 import { api } from "../lib/api"
 import { formatCurrency, formatDate } from "../lib/utils"
 import { IconChevronLeft, IconClock, IconCheck } from "../components/Icons"
+import { LOAN_PURPOSE, LOAN_STATUS } from "@amanah/shared"
 import type { ILoan, IInstallment, ICompletionMessage } from "@amanah/shared"
 
 export default function PinjamanDetailPage() {
   const { id } = useParams<{ id: string }>()
   const queryClient = useQueryClient()
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
+  const [statusError, setStatusError] = useState("")
 
   const { data, isLoading } = useQuery({
     queryKey: ["loan", id],
-    queryFn: () => api.get<{ loan: ILoan; installments: IInstallment[] }>(`/loans/${id}`),
+    queryFn: () => api.get<{ loan: ILoan; installments: IInstallment[]; borrower: { id: string; displayName: string | null; email: string; borrowerTier: string | null } | null }>(`/loans/${id}`),
   })
 
   const { data: completionData } = useQuery({
@@ -34,6 +36,18 @@ export default function PinjamanDetailPage() {
     },
     onError: () => {
       setConfirmingId(null)
+    },
+  })
+
+  const statusMutation = useMutation({
+    mutationFn: (status: "cancelled" | "defaulted") =>
+      api.patch<{ loan: ILoan }>(`/loans/${id}/status`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["loan", id] })
+      setStatusError("")
+    },
+    onError: (err) => {
+      setStatusError(err instanceof Error ? err.message : "Gagal mengubah status")
     },
   })
 
@@ -59,7 +73,7 @@ export default function PinjamanDetailPage() {
     )
   }
 
-  const { loan, installments } = data
+  const { loan, installments, borrower } = data
   const paidCount = installments.filter((i) => i.status === "paid").length
   const totalPaid = installments.filter((i) => i.status === "paid").reduce((s, i) => s + i.amount, 0)
   const progress = installments.length > 0 ? Math.round((paidCount / installments.length) * 100) : 0
@@ -75,15 +89,47 @@ export default function PinjamanDetailPage() {
       <div className="bg-[var(--color-primary)] text-white rounded-2xl p-5 mb-4">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-medium bg-white/20 px-2.5 py-0.5 rounded-full">
-            {loan.purpose === "business_capital" ? "Modal Usaha" : loan.purpose === "home_repair" ? "Renovasi" : loan.purpose === "education" ? "Pendidikan" : loan.purpose === "health" ? "Kesehatan" : loan.purpose === "urgent_needs" ? "Mendesak" : loan.purpose === "worship" ? "Ibadah" : "Konsumatif"}
+            {LOAN_PURPOSE[loan.purpose as keyof typeof LOAN_PURPOSE] || loan.purpose}
           </span>
           <span className="text-sm font-medium bg-white/20 px-2.5 py-0.5 rounded-full">
-            {loan.status === "active" ? "Aktif" : loan.status === "completed" ? "Lunas" : loan.status}
+            {LOAN_STATUS[loan.status as keyof typeof LOAN_STATUS] || loan.status}
           </span>
         </div>
         <p className="text-2xl font-bold">{formatCurrency(loan.amount)}</p>
-        <p className="text-sm opacity-70 mt-1">{loan.borrower_alias} · {loan.duration_months} bulan</p>
+        <p className="text-sm opacity-70 mt-1">{loan.borrowerAlias} · {loan.durationMonths} bulan</p>
+        {borrower && (
+          <div className="mt-2 pt-2 border-t border-white/20 text-xs opacity-80">
+            <span className="font-medium">Peminjam:</span> {borrower.displayName || borrower.email}
+            {borrower.borrowerTier && <span className="ml-2 bg-white/20 px-1.5 py-0.5 rounded text-[10px]">{borrower.borrowerTier}</span>}
+          </div>
+        )}
       </div>
+
+      {loan.status === "active" && (
+        <div className="mb-4">
+          {statusError && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-3 text-sm">{statusError}</div>}
+          <div className="flex gap-2">
+            <button
+              onClick={() => { if (confirm("Batalkan pinjaman ini?")) statusMutation.mutate("cancelled") }}
+              disabled={statusMutation.isPending}
+              className="flex-1 border border-red-200 text-red-600 rounded-xl py-2 text-sm font-medium active:scale-[0.98] transition-transform disabled:opacity-50"
+            >
+              Batalkan
+            </button>
+            <button
+              onClick={() => { if (confirm("Tandai sebagai gagal bayar?")) statusMutation.mutate("defaulted") }}
+              disabled={statusMutation.isPending || paidCount > 0}
+              className="flex-1 border border-yellow-200 text-yellow-700 rounded-xl py-2 text-sm font-medium active:scale-[0.98] transition-transform disabled:opacity-50"
+              title={paidCount > 0 ? "Tidak bisa tandai gagal bayar jika sudah ada cicilan lunas" : ""}
+            >
+              Gagal Bayar
+            </button>
+          </div>
+          {paidCount > 0 && (
+            <p className="text-xs text-gray-400 mt-1 text-center">Gagal bayar hanya tersedia jika belum ada cicilan lunas</p>
+          )}
+        </div>
+      )}
 
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
@@ -116,8 +162,8 @@ export default function PinjamanDetailPage() {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900 text-sm">{inst.period_label}</p>
-                <p className="text-xs text-gray-400">{formatDate(inst.due_date)}</p>
+                <p className="font-medium text-gray-900 text-sm">{inst.periodLabel}</p>
+                <p className="text-xs text-gray-400">{formatDate(inst.dueDate)}</p>
               </div>
               <div className="text-right shrink-0">
                 <p className="font-semibold text-gray-900 text-sm">{formatCurrency(inst.amount)}</p>
@@ -140,29 +186,27 @@ export default function PinjamanDetailPage() {
         </div>
       )}
 
-      {loan.doa_lunas_enabled && allPaid && (
+      {loan.doaLunasEnabled && allPaid && (
         <div className="mt-6">
           <h3 className="font-semibold text-gray-900 mb-3">Doa Lunas</h3>
           {completionMessage ? (
             <div className="bg-green-50 border border-green-100 rounded-xl p-4">
               <p className="text-sm text-green-800 italic">"{completionMessage.message}"</p>
-              <p className="text-xs text-green-600 mt-2">{formatDate(completionMessage.created_at)}</p>
+              <p className="text-xs text-green-600 mt-2">{formatDate(completionMessage.createdAt)}</p>
             </div>
           ) : (
-            <DoaLunasForm loanId={loan.id} onSuccess={() => {
-              queryClient.invalidateQueries({ queryKey: ["completion-messages", id] })
-            }} />
+            <p className="text-gray-400 text-sm">Menunggu doa lunas dari peminjam.</p>
           )}
         </div>
       )}
 
-      {loan.doa_lunas_enabled && !allPaid && (
+      {loan.doaLunasEnabled && !allPaid && (
         <div className="mt-6">
           <h3 className="font-semibold text-gray-900 mb-3">Doa Lunas</h3>
           {completionMessage ? (
             <div className="bg-green-50 border border-green-100 rounded-xl p-4">
               <p className="text-sm text-green-800 italic">"{completionMessage.message}"</p>
-              <p className="text-xs text-green-600 mt-2">{formatDate(completionMessage.created_at)}</p>
+              <p className="text-xs text-green-600 mt-2">{formatDate(completionMessage.createdAt)}</p>
             </div>
           ) : (
             <p className="text-gray-400 text-sm">Doa lunas bisa ditulis setelah semua cicilan lunas.</p>
@@ -170,48 +214,5 @@ export default function PinjamanDetailPage() {
         </div>
       )}
     </div>
-  )
-}
-
-function DoaLunasForm({ loanId, onSuccess }: { loanId: string; onSuccess: () => void }) {
-  const [message, setMessage] = useState("")
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState("")
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!message.trim()) return
-    setSubmitting(true)
-    setError("")
-    try {
-      await api.post("/completion-messages/loan/" + loanId, { message: message.trim() })
-      setMessage("")
-      onSuccess()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal mengirim doa lunas")
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <textarea
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none"
-        rows={3}
-        placeholder="Tulis doa atau pesan syukur..."
-        maxLength={500}
-      />
-      {error && <p className="text-red-600 text-xs">{error}</p>}
-      <button
-        type="submit"
-        disabled={submitting || !message.trim()}
-        className="w-full bg-[var(--color-primary)] text-white rounded-xl py-2.5 font-semibold text-sm disabled:opacity-50 active:scale-[0.98] transition-transform"
-      >
-        {submitting ? "Mengirim..." : "Kirim Doa Lunas"}
-      </button>
-    </form>
   )
 }

@@ -1,11 +1,14 @@
 import { useState } from "react"
-import { useNavigate, Link } from "react-router-dom"
+import { useNavigate, Link, useSearchParams } from "react-router-dom"
 import { useAuth } from "../hooks/use-auth"
 import type { UserRole } from "@amanah/shared"
 
 export default function SignUpPage() {
-  const [role, setRole] = useState<UserRole>("lender")
-  const [email, setEmail] = useState("")
+  const [searchParams] = useSearchParams()
+  const prefillRole = (searchParams.get("role") as UserRole) || "lender"
+  const prefillEmail = searchParams.get("email") || ""
+  const [role, setRole] = useState<UserRole>(prefillRole === "borrower" ? "borrower" : "lender")
+  const [email, setEmail] = useState(prefillEmail)
   const [password, setPassword] = useState("")
   const [displayName, setDisplayName] = useState("")
   const [error, setError] = useState("")

@@ -7,6 +7,12 @@ interface IUser {
   email: string
   role: UserRole
   displayName: string | null
+  phone: string | null
+  idNumber: string | null
+  address: string | null
+  occupation: string | null
+  ktpDocumentUrl: string | null
+  profileCompleted: boolean
   borrowerTier: string | null
   lenderTier: string | null
   rating: string | null
@@ -22,6 +28,7 @@ interface IAuthState {
   signOut: () => Promise<void>
   restoreSession: () => Promise<void>
   fetchProfile: () => Promise<void>
+  updateProfile: (displayName: string) => Promise<void>
 }
 
 export const useAuthStore = create<IAuthState>((set, get) => ({
@@ -99,5 +106,10 @@ export const useAuthStore = create<IAuthState>((set, get) => ({
       const profile = await api.get<IUser>("/auth/me")
       set({ user: profile })
     } catch {}
+  },
+
+  updateProfile: async (displayName: string) => {
+    const updated = await api.patch<IUser>("/auth/me", { displayName })
+    set({ user: updated })
   },
 }))

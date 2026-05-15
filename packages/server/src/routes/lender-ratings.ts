@@ -3,7 +3,7 @@ import { eq, and } from "drizzle-orm"
 import { zValidator } from "@hono/zod-validator"
 import { z } from "zod"
 import { db } from "../db"
-import { lenderRatings, loans } from "../db/schema"
+import { lenderRatings, loans, installments } from "../db/schema"
 import { authMiddleware, AuthEnv } from "../middleware/auth"
 import { borrowerOnlyMiddleware } from "../middleware/role"
 
@@ -31,12 +31,20 @@ ratingRoutes.post("/", authMiddleware, borrowerOnlyMiddleware, zValidator("json"
   }
 
   if (loan.status !== "completed") {
-    return c.json({ error: "Hanya bisa memberi rating untuk pinjaman yang sudah lunas" }, 400)
+    const allInstallments = await db.select().from(installments).where(eq(installments.loanId, loanId))
+    const allPaid = allInstallments.length > 0 && allInstallments.every((i) => i.status === "paid")
+    if (!allPaid) {
+      return c.json({ error: "Hanya bisa memberi rating untuk pinjaman yang sudah lunas" }, 400)
+    }
   }
 
   const [existing] = await db.select().from(lenderRatings).where(eq(lenderRatings.loanId, loanId))
   if (existing) {
     return c.json({ error: "Rating sudah diberikan" }, 409)
+  }
+
+  if (!loan.lenderId) {
+    return c.json({ error: "Pinjaman belum memiliki pemberi pinjaman" }, 400)
   }
 
   const [newRating] = await db

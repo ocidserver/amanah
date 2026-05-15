@@ -2,16 +2,19 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { api } from "../lib/api"
-import { COLLATERAL_TYPE, INSTALLMENT_TYPE } from "@amanah/shared"
+import { COLLATERAL_TYPE, INSTALLMENT_TYPE, LOAN_PURPOSE } from "@amanah/shared"
 import type { ITrustee } from "@amanah/shared"
+import { formatCurrency } from "../lib/utils"
 
 export default function PinjamanBaruPage() {
   const navigate = useNavigate()
   const [form, setForm] = useState({
     borrowerAlias: "Peminjam",
+    borrowerEmail: "",
     amount: "",
     durationMonths: "1",
     installmentType: "monthly" as string,
+    purpose: "urgent_needs" as string,
     collateralType: "none" as string,
     trusteeId: "",
     hideBorrower: true,
@@ -20,12 +23,39 @@ export default function PinjamanBaruPage() {
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
+  const [borrowerLookup, setBorrowerLookup] = useState<{ found: boolean; displayName: string | null; tier: string | null; maxAmount: number | null } | null>(null)
+  const [lookingUpBorrower, setLookingUpBorrower] = useState(false)
 
   const { data: trusteesData } = useQuery({
     queryKey: ["trustees"],
     queryFn: () => api.get<{ trustees: ITrustee[] }>("/trustees"),
   })
   const trustees = trusteesData?.trustees ?? []
+
+  const handleBorrowerEmailBlur = async () => {
+    const email = form.borrowerEmail.trim()
+    if (!email) {
+      setBorrowerLookup(null)
+      return
+    }
+    setLookingUpBorrower(true)
+    try {
+      const data = await api.get<{ borrower: { id: string; displayName: string | null; borrowerTier: string | null; maxBorrowingAmount: number } | null }>(`/loans/search-borrower?email=${encodeURIComponent(email)}`)
+      const borrowerData = data.borrower as { id: string; displayName: string | null; borrowerTier: string | null; maxBorrowingAmount: number } | null
+      if (borrowerData) {
+        setBorrowerLookup({ found: true, displayName: borrowerData.displayName, tier: borrowerData.borrowerTier, maxAmount: borrowerData.maxBorrowingAmount })
+        if (!form.borrowerAlias || form.borrowerAlias === "Peminjam") {
+          setForm((f) => ({ ...f, borrowerAlias: borrowerData.displayName || "Peminjam" }))
+        }
+      } else {
+        setBorrowerLookup({ found: false, displayName: null, tier: null, maxAmount: null })
+      }
+    } catch {
+      setBorrowerLookup(null)
+    } finally {
+      setLookingUpBorrower(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,6 +67,7 @@ export default function PinjamanBaruPage() {
         amount: Number(form.amount),
         durationMonths: Number(form.durationMonths),
         installmentType: form.installmentType,
+        purpose: form.purpose,
         collateralType: form.collateralType,
         hideBorrower: form.hideBorrower,
         reminderEnabled: form.reminderEnabled,
@@ -45,8 +76,11 @@ export default function PinjamanBaruPage() {
       if (form.trusteeId) {
         payload.trusteeId = form.trusteeId
       }
-      const result = await api.post<{ loan: Record<string, unknown> }>("/loans", payload)
-      navigate("/pinjaman/baru/success", { state: { loan: result.loan } })
+      if (form.borrowerEmail.trim()) {
+        payload.borrowerEmail = form.borrowerEmail.trim().toLowerCase()
+      }
+      const result = await api.post<{ loan: Record<string, unknown>; invitationSent?: boolean }>("/loans", payload)
+      navigate("/pinjaman/baru/success", { state: { loan: result.loan, invitationSent: !!result.invitationSent, borrowerEmail: form.borrowerEmail.trim() } })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal membuat pinjaman")
     } finally {
@@ -63,6 +97,29 @@ export default function PinjamanBaruPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Email Peminjam <span className="text-gray-400 font-normal">(opsional)</span></label>
+          <input
+            type="email"
+            value={form.borrowerEmail}
+            onChange={(e) => { setForm({ ...form, borrowerEmail: e.target.value }); if (!e.target.value.trim()) setBorrowerLookup(null) }}
+            onBlur={handleBorrowerEmailBlur}
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+            placeholder="peminjam@email.com"
+          />
+          {lookingUpBorrower && <p className="text-xs text-gray-400 mt-1">Mencari akun peminjam...</p>}
+          {borrowerLookup?.found && (
+            <p className="text-xs text-green-600 mt-1">
+              Akun ditemukan: <strong>{borrowerLookup.displayName || "Tanpa Nama"}</strong>
+              {borrowerLookup.tier && ` (${borrowerLookup.tier})`}
+              {borrowerLookup.maxAmount && ` — Maks. ${formatCurrency(borrowerLookup.maxAmount)}`}
+            </p>
+          )}
+          {borrowerLookup && !borrowerLookup.found && form.borrowerEmail.trim() && (
+            <p className="text-xs text-yellow-600 mt-1">Email belum terdaftar sebagai peminjam. Undangan akan dikirim setelah pinjaman dibuat.</p>
+          )}
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Alias Peminjam</label>
           <input
@@ -84,6 +141,19 @@ export default function PinjamanBaruPage() {
             placeholder="1000000"
             required
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Tujuan Pinjaman</label>
+          <select
+            value={form.purpose}
+            onChange={(e) => setForm({ ...form, purpose: e.target.value })}
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+          >
+            {Object.entries(LOAN_PURPOSE).map(([key, label]) => (
+              <option key={key} value={key}>{label}</option>
+            ))}
+          </select>
         </div>
 
         <div>

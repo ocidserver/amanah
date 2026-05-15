@@ -1,15 +1,17 @@
 export type UserRole = "lender" | "borrower" | "trustee" | "admin"
-export type LoanStatus = "active" | "completed" | "defaulted" | "cancelled"
+export type LoanStatus = "pending" | "approved" | "active" | "completed" | "defaulted" | "cancelled" | "rejected"
 export type InstallmentStatus = "unpaid" | "processing" | "paid"
 export type CollateralType = "document" | "valuables" | "letter" | "none"
-export type CollateralStatus = "pending" | "held" | "returned"
+export type CollateralStatus = "pending" | "held" | "returned" | "verified"
 export type InstallmentType = "monthly" | "weekly" | "lump_sum" | "flexible"
 export type TrusteeType = "personal" | "institution"
 export type TrusteeRequestStatus = "pending" | "accepted" | "declined"
-export type LoanPurpose = "business_capital" | "home_repair" | "consumables" | "education" | "health" | "urgent_needs" | "worship"
+export type LoanPurpose = "business_capital" | "home" | "consumables" | "education" | "health" | "urgent_needs" | "family_needs" | "debt_consolidation"
 export type InvitationStatus = "pending" | "accepted" | "expired"
 export type BorrowerTier = "baru" | "kecil" | "menengah" | "utama"
 export type LenderTier = "pemula" | "penolong" | "dermawan" | "mujir"
+export type BICheckStatus = "pending" | "approved" | "rejected" | "review"
+export type PaymentProofStatus = "pending" | "verified" | "rejected"
 
 export type TierLabel = {
   key: string
@@ -35,127 +37,168 @@ export interface IUser {
   id: string
   email: string
   role: UserRole
-  display_name: string | null
-  borrower_tier: BorrowerTier | null
-  lender_tier: LenderTier | null
+  displayName: string | null
+  phone: string | null
+  idNumber: string | null
+  address: string | null
+  occupation: string | null
+  ktpDocumentUrl: string | null
+  profileCompleted: boolean
+  borrowerTier: BorrowerTier | null
+  lenderTier: LenderTier | null
   rating: string | null
-  rating_count: number
-  on_time_percentage: string | null
-  completed_loans: number
-  created_at: string
+  ratingCount: number
+  onTimePercentage: string | null
+  completedLoans: number
+  createdAt: string
 }
 
 export interface ILoan {
   id: string
-  lender_id: string
-  borrower_id: string | null
-  borrower_alias: string
-  trustee_id: string | null
+  lenderId: string | null
+  borrowerId: string | null
+  borrowerAlias: string
+  trusteeId: string | null
   amount: number
-  duration_months: number
-  installment_type: InstallmentType
+  durationMonths: number
+  installmentType: InstallmentType
   purpose: LoanPurpose
-  collateral_type: CollateralType
-  collateral_status: CollateralStatus
-  notes_encrypted: string | null
+  collateralType: CollateralType
+  collateralStatus: CollateralStatus
+  notesEncrypted: string | null
+  applicationNote: string | null
   status: LoanStatus
-  hide_borrower: boolean
-  reminder_enabled: boolean
-  doa_lunas_enabled: boolean
-  auto_delete_days: number | null
-  start_date: string
-  due_date: string | null
-  completed_at: string | null
-  created_at: string
-  updated_at: string
+  hideBorrower: boolean
+  reminderEnabled: boolean
+  doaLunasEnabled: boolean
+  autoDeleteDays: number | null
+  ujrah: number
+  stampFee: number
+  adminFee: number
+  custodyFee: number
+  totalFee: number
+  disbursedAmount: number
+  transitAccount: string | null
+  contractUrl: string | null
+  approvedBy: string | null
+  approvedAt: string | null
+  startDate: string | null
+  dueDate: string | null
+  completedAt: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export interface IInstallment {
   id: string
-  loan_id: string
-  period_label: string
+  loanId: string
+  periodLabel: string
   amount: number
-  due_date: string
-  paid_at: string | null
+  dueDate: string
+  paidAt: string | null
   status: InstallmentStatus
-  confirmed_by: string | null
-  created_at: string
+  confirmedBy: string | null
+  reminderSentAt: string | null
+  createdAt: string
 }
 
 export interface ITrustee {
   id: string
-  profile_id: string | null
+  profileId: string | null
   name: string
   type: TrusteeType
   email: string | null
   institution: string | null
-  is_verified: boolean
-  created_by: string
-  created_at: string
+  isVerified: boolean
+  createdBy: string
+  createdAt: string
 }
 
 export interface ICompletionMessage {
   id: string
-  loan_id: string
+  loanId: string
   message: string
-  created_at: string
+  createdAt: string
 }
 
 export interface ITrusteeRequest {
   id: string
-  loan_id: string
-  trustee_id: string
+  loanId: string
+  trusteeId: string
   status: TrusteeRequestStatus
-  responded_at: string | null
-  created_at: string
+  respondedAt: string | null
+  createdAt: string
 }
 
 export interface ILoanInvitation {
   id: string
-  loan_id: string
-  borrower_email: string
+  loanId: string
+  borrowerEmail: string
   token: string
   status: InvitationStatus
-  expires_at: string
-  created_at: string
+  expiresAt: string
+  createdAt: string
 }
 
 export interface ILenderRating {
   id: string
-  loan_id: string
-  borrower_id: string
-  lender_id: string
+  loanId: string
+  borrowerId: string
+  lenderId: string
   rating: number
   review: string | null
-  created_at: string
+  createdAt: string
 }
 
 export interface IRoleChangeRequest {
   id: string
-  user_id: string
-  requested_role: UserRole
+  userId: string
+  requestedRole: UserRole
   status: InvitationStatus
-  reviewed_at: string | null
-  created_at: string
+  reviewedAt: string | null
+  createdAt: string
 }
 
 export interface IBorrowerProfile {
   id: string
   email: string
-  display_name: string | null
-  borrower_tier: BorrowerTier | null
-  on_time_percentage: string | null
-  completed_loans: number
+  displayName: string | null
+  borrowerTier: BorrowerTier | null
+  onTimePercentage: string | null
+  completedLoans: number
+}
+
+export interface IBICheck {
+  id: string
+  userId: string
+  status: BICheckStatus
+  notes: string | null
+  checkedAt: string | null
+  createdAt: string
+}
+
+export interface IPaymentProof {
+  id: string
+  installmentId: string
+  imageUrl: string
+  status: PaymentProofStatus
+  verifiedBy: string | null
+  verifiedAt: string | null
+  uploadedAt: string
+  createdAt: string
 }
 
 export const MAX_COMPLETION_MESSAGE_LENGTH = 500
 export const MAX_LOAN_DURATION_MONTHS = 60
 
 export const LOAN_STATUS: Record<LoanStatus, string> = {
+  pending: "Menunggu Persetujuan",
+  approved: "Disetujui",
   active: "Aktif",
   completed: "Lunas",
   defaulted: "Gagal Bayar",
   cancelled: "Dibatalkan",
+  rejected: "Ditolak",
 }
 
 export const INSTALLMENT_STATUS: Record<InstallmentStatus, string> = {
@@ -175,6 +218,7 @@ export const COLLATERAL_STATUS: Record<CollateralStatus, string> = {
   pending: "Menunggu",
   held: "Dipegang",
   returned: "Dikembalikan",
+  verified: "Terverifikasi",
 }
 
 export const INSTALLMENT_TYPE: Record<InstallmentType, string> = {
@@ -186,12 +230,13 @@ export const INSTALLMENT_TYPE: Record<InstallmentType, string> = {
 
 export const LOAN_PURPOSE: Record<LoanPurpose, string> = {
   business_capital: "Modal Usaha",
-  home_repair: "Renovasi Rumah",
+  home: "Perumahan",
   consumables: "Kebutuhan Konsumtif",
   education: "Pendidikan",
   health: "Kesehatan",
   urgent_needs: "Kebutuhan Mendesak",
-  worship: "Ibadah",
+  family_needs: "Kebutuhan Keluarga",
+  debt_consolidation: "Pelunasan Hutang",
 }
 
 export const BORROWER_TIER_LABELS: Record<BorrowerTier, string> = {
@@ -220,3 +265,25 @@ export const COLORS = {
   textSecondary: "#64748B",
   textMuted: "#94A3B8",
 }
+
+export const BI_CHECK_STATUS: Record<BICheckStatus, string> = {
+  pending: "Menunggu",
+  approved: "Disetujui",
+  rejected: "Ditolak",
+  review: "Dalam Review",
+}
+
+export const PAYMENT_PROOF_STATUS: Record<PaymentProofStatus, string> = {
+  pending: "Menunggu Verifikasi",
+  verified: "Terverifikasi",
+  rejected: "Ditolak",
+}
+
+export const FEE_CONFIG = {
+  ujrahRate: 0.01,
+  ujrahMin: 10_000,
+  stampFee: 10_000,
+  adminFee: 25_000,
+  custodyRate: 0.005,
+  custodyMin: 5_000,
+} as const

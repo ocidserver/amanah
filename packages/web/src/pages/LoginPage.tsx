@@ -112,11 +112,9 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div className="mt-4 text-center">
-            <Link to="/track" className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
-              Lacak pinjaman tanpa masuk →
-            </Link>
-          </div>
+<div className="mt-4 text-center">
+              <p className="text-xs text-gray-400">Belum punya akun? <Link to="/signup" className="text-[var(--color-primary)] font-medium">Daftar sekarang</Link></p>
+            </div>
         </div>
       </div>
     </div>

@@ -73,7 +73,7 @@ export default function WaliAmanahPage() {
                     <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
                       {t.type === "personal" ? "Personal" : "Institusi"}
                     </span>
-                    {t.is_verified && (
+                    {t.isVerified && (
                       <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Terverifikasi</span>
                     )}
                   </div>

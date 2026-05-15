@@ -95,7 +95,7 @@ export default function BorrowerLoanDetailPage() {
           </span>
         </div>
         <p className="text-2xl font-bold">{formatCurrency(loan.amount)}</p>
-        <p className="text-sm opacity-70 mt-1">{loan.borrower_alias} · {loan.duration_months} bulan</p>
+        <p className="text-sm opacity-70 mt-1">{loan.borrowerAlias} · {loan.durationMonths} bulan</p>
         {lender && (
           <div className="mt-3 pt-3 border-t border-white/20">
             <p className="text-xs opacity-70">Pemberi Pinjaman</p>
@@ -136,8 +136,8 @@ export default function BorrowerLoanDetailPage() {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900 text-sm">{inst.period_label}</p>
-                <p className="text-xs text-gray-400">{formatDate(inst.due_date)}</p>
+                <p className="font-medium text-gray-900 text-sm">{inst.periodLabel}</p>
+                <p className="text-xs text-gray-400">{formatDate(inst.dueDate)}</p>
               </div>
               <div className="text-right shrink-0">
                 <p className="font-semibold text-gray-900 text-sm">{formatCurrency(inst.amount)}</p>
@@ -160,13 +160,13 @@ export default function BorrowerLoanDetailPage() {
         </div>
       )}
 
-      {loan.doa_lunas_enabled && (
+      {loan.doaLunasEnabled && (
         <div className="mt-6">
           <h3 className="font-semibold text-gray-900 mb-3">Doa Lunas</h3>
           {completionMessage ? (
             <div className="bg-green-50 border border-green-100 rounded-xl p-4">
               <p className="text-sm text-green-800 italic">"{completionMessage.message}"</p>
-              <p className="text-xs text-green-600 mt-2">{formatDate(completionMessage.created_at)}</p>
+              <p className="text-xs text-green-600 mt-2">{formatDate(completionMessage.createdAt)}</p>
             </div>
           ) : allPaid ? (
             <form onSubmit={handleDoaLunas} className="space-y-3">
@@ -193,9 +193,9 @@ export default function BorrowerLoanDetailPage() {
         </div>
       )}
 
-      {allPaid && !lenderRating && loan.status === "completed" && (
+      {allPaid && !lenderRating && loan.status === "completed" && loan.lenderId && (
         <div className="mt-6">
-          <RateLenderForm loanId={loan.id} lenderId={loan.lender_id} onSubmitted={() => {
+          <RateLenderForm loanId={loan.id} lenderId={loan.lenderId} onSubmitted={() => {
             queryClient.invalidateQueries({ queryKey: ["borrower-loan", id] })
           }} />
         </div>

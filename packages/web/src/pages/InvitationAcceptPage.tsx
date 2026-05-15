@@ -16,8 +16,8 @@ export default function InvitationAcceptPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["invitation", token],
     queryFn: () => api.get<{
-      invitation: { id: string; email: string; expires_at: string }
-      loan: { amount: number; duration_months: number; purpose: string; borrower_alias: string }
+      invitation: { id: string; email: string; expiresAt: string }
+      loan: { amount: number; durationMonths: number; purpose: string; borrowerAlias: string }
       lender: { displayName: string | null; email: string } | null
       borrowerExists: boolean
     }>(`/invitations/${token}`),
@@ -88,7 +88,7 @@ export default function InvitationAcceptPage() {
             </div>
             <div>
               <p className="text-gray-500">Durasi</p>
-              <p className="font-semibold text-gray-900">{loan.duration_months} bulan</p>
+              <p className="font-semibold text-gray-900">{loan.durationMonths} bulan</p>
             </div>
             <div>
               <p className="text-gray-500">Tujuan</p>
@@ -96,7 +96,7 @@ export default function InvitationAcceptPage() {
             </div>
             <div>
               <p className="text-gray-500">Alias</p>
-              <p className="font-semibold text-gray-900">{loan.borrower_alias}</p>
+              <p className="font-semibold text-gray-900">{loan.borrowerAlias}</p>
             </div>
           </div>
         </div>
@@ -132,7 +132,7 @@ export default function InvitationAcceptPage() {
         )}
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          Undangan berlaku hingga {new Date(invitation.expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+          Undangan berlaku hingga {new Date(invitation.expiresAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
         </p>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { api } from "../lib/api"
 import { formatCurrency, formatDate } from "../lib/utils"
 import { IconPlus, IconLoan, IconClock, IconChevronRight } from "../components/Icons"
+import { LOAN_PURPOSE } from "@amanah/shared"
 import type { ILoan } from "@amanah/shared"
 
 export default function PinjamanPage() {
@@ -66,7 +67,7 @@ export default function PinjamanPage() {
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <p className="font-semibold text-gray-900 truncate">{loan.borrower_alias}</p>
+                    <p className="font-semibold text-gray-900 truncate">{loan.borrowerAlias}</p>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${
                       loan.status === "active" ? "bg-green-50 text-green-700" :
                       loan.status === "completed" ? "bg-blue-50 text-blue-700" :
@@ -77,10 +78,10 @@ export default function PinjamanPage() {
                   </div>
                   <p className="text-lg font-bold text-gray-900">{formatCurrency(loan.amount)}</p>
                   <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
-                    <span>{loan.purpose === "business_capital" ? "Modal Usaha" : loan.purpose === "home_repair" ? "Renovasi" : loan.purpose === "education" ? "Pendidikan" : loan.purpose === "health" ? "Kesehatan" : loan.purpose === "urgent_needs" ? "Mendesak" : loan.purpose === "worship" ? "Ibadah" : "Konsumtif"}</span>
+                    <span>{LOAN_PURPOSE[loan.purpose as keyof typeof LOAN_PURPOSE] || loan.purpose}</span>
                     <span className="flex items-center gap-0.5">
                       <IconClock className="w-3 h-3" />
-                      {formatDate(loan.created_at)}
+                      {formatDate(loan.createdAt)}
                     </span>
                   </div>
                 </div>

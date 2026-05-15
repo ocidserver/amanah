@@ -7,7 +7,6 @@ const navItems = [
   { to: "/pinjaman", label: "Pinjaman", Icon: IconLoan },
   { to: "/wali-amanah", label: "Wali", Icon: IconTrustee },
   { to: "/profil", label: "Profil", Icon: IconUser },
-  { to: "/pengaturan", label: "Pengaturan", Icon: IconSettings },
 ]
 
 export default function Layout() {

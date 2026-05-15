@@ -6,6 +6,7 @@ import { db } from "../db"
 import { users, refreshTokens, roleChangeRequests } from "../db/schema"
 import { signAccessToken, signRefreshToken, verifyToken, hashPassword, comparePassword } from "../lib/auth"
 import { authMiddleware, AuthEnv } from "../middleware/auth"
+import { sendWelcomeEmail } from "../lib/email"
 
 const auth = new Hono<AuthEnv>()
 
@@ -65,6 +66,8 @@ auth.post("/register", zValidator("json", registerSchema), async (c) => {
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
   })
 
+  sendWelcomeEmail(newUser.email, newUser.displayName).catch(() => {})
+
   return c.json(
     {
       accessToken,
@@ -74,6 +77,12 @@ auth.post("/register", zValidator("json", registerSchema), async (c) => {
         email: newUser.email,
         role: newUser.role,
         displayName: newUser.displayName,
+        phone: newUser.phone,
+        idNumber: newUser.idNumber,
+        address: newUser.address,
+        occupation: newUser.occupation,
+        ktpDocumentUrl: newUser.ktpDocumentUrl,
+        profileCompleted: newUser.profileCompleted,
         borrowerTier: newUser.borrowerTier,
         lenderTier: newUser.lenderTier,
         rating: newUser.rating,
@@ -115,6 +124,12 @@ auth.post("/login", zValidator("json", loginSchema), async (c) => {
       email: user.email,
       role: user.role,
       displayName: user.displayName,
+      phone: user.phone,
+      idNumber: user.idNumber,
+      address: user.address,
+      occupation: user.occupation,
+      ktpDocumentUrl: user.ktpDocumentUrl,
+      profileCompleted: user.profileCompleted,
       borrowerTier: user.borrowerTier,
       lenderTier: user.lenderTier,
       rating: user.rating,
@@ -135,6 +150,12 @@ auth.get("/me", authMiddleware, async (c) => {
     email: dbUser.email,
     role: dbUser.role,
     displayName: dbUser.displayName,
+    phone: dbUser.phone,
+    idNumber: dbUser.idNumber,
+    address: dbUser.address,
+    occupation: dbUser.occupation,
+    ktpDocumentUrl: dbUser.ktpDocumentUrl,
+    profileCompleted: dbUser.profileCompleted,
     borrowerTier: dbUser.borrowerTier,
     lenderTier: dbUser.lenderTier,
     rating: dbUser.rating,
@@ -241,6 +262,71 @@ auth.post("/role-change-request", authMiddleware, zValidator("json", roleChangeS
   })
 
   return c.json({ message: "Permintaan perubahan role telah dikirim" }, 201)
+})
+
+const updateProfileSchema = z.object({
+  displayName: z.string().min(1).max(100).optional(),
+  phone: z.string().max(20).optional(),
+  idNumber: z.string().max(50).optional(),
+  address: z.string().max(500).optional(),
+  occupation: z.string().max(100).optional(),
+})
+
+auth.patch("/me", authMiddleware, zValidator("json", updateProfileSchema), async (c) => {
+  const user = c.get("user")
+  const body = c.req.valid("json")
+
+  const [existing] = await db.select().from(users).where(eq(users.id, user.userId))
+  if (!existing) {
+    return c.json({ error: "User not found" }, 404)
+  }
+
+  const updateData: Record<string, unknown> = {}
+  if (body.displayName !== undefined) updateData.displayName = body.displayName
+  if (body.phone !== undefined) updateData.phone = body.phone
+  if (body.idNumber !== undefined) updateData.idNumber = body.idNumber
+  if (body.address !== undefined) updateData.address = body.address
+  if (body.occupation !== undefined) updateData.occupation = body.occupation
+
+  const isProfileComplete = !!(
+    (updateData.displayName ?? existing.displayName) &&
+    (updateData.phone ?? existing.phone) &&
+    (updateData.idNumber ?? existing.idNumber) &&
+    (updateData.address ?? existing.address) &&
+    (updateData.occupation ?? existing.occupation) &&
+    existing.ktpDocumentUrl
+  )
+  updateData.profileCompleted = isProfileComplete
+
+  const [updated] = await db
+    .update(users)
+    .set(updateData)
+    .where(eq(users.id, user.userId))
+    .returning()
+
+  if (!updated) {
+    return c.json({ error: "User not found" }, 404)
+  }
+
+  return c.json({
+    id: updated.id,
+    email: updated.email,
+    role: updated.role,
+    displayName: updated.displayName,
+    phone: updated.phone,
+    idNumber: updated.idNumber,
+    address: updated.address,
+    occupation: updated.occupation,
+    ktpDocumentUrl: updated.ktpDocumentUrl,
+    profileCompleted: updated.profileCompleted,
+    borrowerTier: updated.borrowerTier,
+    lenderTier: updated.lenderTier,
+    rating: updated.rating,
+    ratingCount: updated.ratingCount,
+    onTimePercentage: updated.onTimePercentage,
+    completedLoans: updated.completedLoans,
+    createdAt: updated.createdAt,
+  })
 })
 
 export default auth

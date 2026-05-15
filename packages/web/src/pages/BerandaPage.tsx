@@ -4,6 +4,7 @@ import { api } from "../lib/api"
 import { Link } from "react-router-dom"
 import { formatCurrency, formatDate } from "../lib/utils"
 import { IconWallet, IconCheck, IconPlus, IconChevronRight, IconClock } from "../components/Icons"
+import { LOAN_PURPOSE, LOAN_STATUS } from "@amanah/shared"
 import type { ILoan } from "@amanah/shared"
 
 export default function BerandaPage() {
@@ -13,6 +14,11 @@ export default function BerandaPage() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["loans"],
     queryFn: () => api.get<{ loans: ILoan[] }>("/loans"),
+  })
+
+  const { data: appData } = useQuery({
+    queryKey: ["lender-applications"],
+    queryFn: () => api.get<{ applications: { status: string }[] }>("/lender-app/applications"),
   })
 
   if (error) {
@@ -29,6 +35,7 @@ export default function BerandaPage() {
   const completedLoans = loans.filter((l) => l.status === "completed")
   const totalActive = activeLoans.reduce((s, l) => s + l.amount, 0)
   const totalCompleted = completedLoans.reduce((s, l) => s + l.amount, 0)
+  const pendingCount = appData?.applications?.filter((a) => a.status === "pending").length ?? 0
 
   return (
     <div className="px-4 pt-4 pb-4">
@@ -61,6 +68,21 @@ export default function BerandaPage() {
             <p className="text-xs opacity-60 mt-0.5">{completedLoans.length} pinjaman</p>
           </div>
         </div>
+      )}
+
+      {pendingCount > 0 && (
+        <Link
+          to="/pengajuan"
+          className="block bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4 active:scale-[0.99] transition-transform"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-amber-800">{pendingCount} Pengajuan Baru</p>
+              <p className="text-sm text-amber-600">Menunggu persetujuan Anda</p>
+            </div>
+            <IconChevronRight className="w-5 h-5 text-amber-400" />
+          </div>
+        </Link>
       )}
 
       <div className="flex items-center justify-between mb-3">
@@ -100,22 +122,24 @@ export default function BerandaPage() {
             >
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <p className="font-semibold text-gray-900">{loan.borrower_alias}</p>
+                  <p className="font-semibold text-gray-900">{loan.borrowerAlias}</p>
                   <p className="text-xs text-gray-500 flex items-center gap-1">
                     <IconClock className="w-3 h-3" />
-                    {formatDate(loan.created_at)}
+                    {formatDate(loan.createdAt)}
                   </p>
                 </div>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                   loan.status === "active" ? "bg-green-50 text-green-700" :
                   loan.status === "completed" ? "bg-blue-50 text-blue-700" :
+                  loan.status === "pending" ? "bg-amber-50 text-amber-700" :
+                  loan.status === "approved" ? "bg-emerald-50 text-emerald-700" :
                   "bg-gray-50 text-gray-600"
                 }`}>
-                  {loan.status === "active" ? "Aktif" : loan.status === "completed" ? "Lunas" : loan.status}
+                  {LOAN_STATUS[loan.status] || loan.status}
                 </span>
               </div>
               <p className="text-lg font-bold text-gray-900">{formatCurrency(loan.amount)}</p>
-              <p className="text-xs text-gray-400">{loan.purpose === "business_capital" ? "Modal Usaha" : loan.purpose === "home_repair" ? "Renovasi" : loan.purpose === "education" ? "Pendidikan" : loan.purpose === "health" ? "Kesehatan" : loan.purpose === "urgent_needs" ? "Mendesak" : loan.purpose === "worship" ? "Ibadah" : "Konsumtif"}</p>
+              <p className="text-xs text-gray-400">{LOAN_PURPOSE[loan.purpose as keyof typeof LOAN_PURPOSE] || loan.purpose}</p>
             </Link>
           ))}
         </div>

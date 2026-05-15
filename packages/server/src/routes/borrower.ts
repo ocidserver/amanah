@@ -4,8 +4,10 @@ import { zValidator } from "@hono/zod-validator"
 import { z } from "zod"
 import { db } from "../db"
 import { loans, installments, completionMessages, lenderRatings, users } from "../db/schema"
-import { authMiddleware,AuthEnv } from "../middleware/auth"
+import { authMiddleware, AuthEnv } from "../middleware/auth"
 import { borrowerOnlyMiddleware } from "../middleware/role"
+import { checkAndCompleteLoan } from "../lib/loan-helpers"
+import { sendPaymentConfirmedEmail } from "../lib/email"
 
 const borrowerRoutes = new Hono<AuthEnv>()
 
@@ -42,10 +44,12 @@ borrowerRoutes.get("/loans/:id", async (c) => {
     .where(eq(installments.loanId, id))
     .orderBy(installments.dueDate)
 
-  const [lender] = await db
-    .select({ id: users.id, displayName: users.displayName, lenderTier: users.lenderTier, rating: users.rating })
-    .from(users)
-    .where(eq(users.id, loan.lenderId))
+  const lender = loan.lenderId
+    ? (await db
+        .select({ id: users.id, displayName: users.displayName, lenderTier: users.lenderTier, rating: users.rating })
+        .from(users)
+        .where(eq(users.id, loan.lenderId)))[0] ?? null
+    : null
 
   const [msg] = await db
     .select()
@@ -99,6 +103,24 @@ borrowerRoutes.patch("/installments/:id/confirm", zValidator("json", z.object({
     .where(eq(installments.id, id))
     .returning()
 
+  if (status === "paid") {
+    checkAndCompleteLoan(inst.loanId).catch(() => {})
+
+    const [loan] = await db.select().from(loans).where(and(eq(loans.id, inst.loanId), eq(loans.borrowerId, user.userId)))
+    if (loan) {
+      if (loan.lenderId) {
+        const [lenderUser] = await db.select({ email: users.email, displayName: users.displayName }).from(users).where(eq(users.id, loan.lenderId))
+        if (lenderUser?.email) {
+          sendPaymentConfirmedEmail(lenderUser.email, inst.periodLabel, inst.amount).catch(() => {})
+        }
+      }
+      const [borrowerUser] = await db.select({ email: users.email }).from(users).where(eq(users.id, user.userId))
+      if (borrowerUser?.email) {
+        sendPaymentConfirmedEmail(borrowerUser.email, inst.periodLabel, inst.amount).catch(() => {})
+      }
+    }
+  }
+
   return c.json({ installment: updated })
 })
 
@@ -144,13 +166,20 @@ borrowerRoutes.post("/rate-lender", zValidator("json", z.object({
     return c.json({ error: "Pinjaman tidak ditemukan" }, 404)
   }
 
-  if (loan.status !== "completed") {
+  const allInstallments = await db.select().from(installments).where(eq(installments.loanId, loanId))
+  const allPaid = allInstallments.length > 0 && allInstallments.every((i) => i.status === "paid")
+
+  if (loan.status !== "completed" && !allPaid) {
     return c.json({ error: "Hanya bisa memberi rating untuk pinjaman yang sudah lunas" }, 400)
   }
 
   const [existing] = await db.select().from(lenderRatings).where(eq(lenderRatings.loanId, loanId))
   if (existing) {
     return c.json({ error: "Rating sudah diberikan untuk pinjaman ini" }, 409)
+  }
+
+  if (!loan.lenderId) {
+    return c.json({ error: "Pinjaman belum memiliki pemberi pinjaman" }, 400)
   }
 
   const [newRating] = await db
@@ -188,6 +217,8 @@ borrowerRoutes.get("/profile", async (c) => {
 
   const activeLoans = await db.select().from(loans).where(and(eq(loans.borrowerId, user.userId), eq(loans.status, "active")))
   const completedLoans = await db.select().from(loans).where(and(eq(loans.borrowerId, user.userId), eq(loans.status, "completed")))
+  const pendingLoans = await db.select().from(loans).where(and(eq(loans.borrowerId, user.userId), eq(loans.status, "pending")))
+  const approvedLoans = await db.select().from(loans).where(and(eq(loans.borrowerId, user.userId), eq(loans.status, "approved")))
   const totalActive = activeLoans.reduce((s, l) => s + l.amount, 0)
   const totalCompleted = completedLoans.reduce((s, l) => s + l.amount, 0)
 
@@ -196,11 +227,19 @@ borrowerRoutes.get("/profile", async (c) => {
     email: dbUser.email,
     role: dbUser.role,
     displayName: dbUser.displayName,
+    phone: dbUser.phone,
+    idNumber: dbUser.idNumber,
+    address: dbUser.address,
+    occupation: dbUser.occupation,
+    ktpDocumentUrl: dbUser.ktpDocumentUrl,
+    profileCompleted: dbUser.profileCompleted,
     borrowerTier: dbUser.borrowerTier,
     onTimePercentage: dbUser.onTimePercentage,
     completedLoans: dbUser.completedLoans,
     activeLoansCount: activeLoans.length,
     completedLoansCount: completedLoans.length,
+    pendingLoansCount: pendingLoans.length,
+    approvedLoansCount: approvedLoans.length,
     totalActive,
     totalCompleted,
     createdAt: dbUser.createdAt,

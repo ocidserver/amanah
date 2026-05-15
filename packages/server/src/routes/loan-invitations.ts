@@ -31,10 +31,13 @@ invitationRoutes.get("/:token", async (c) => {
     return c.json({ error: "Pinjaman tidak ditemukan" }, 404)
   }
 
-  const [lender] = await db.select({
-    displayName: users.displayName,
-    email: users.email,
-  }).from(users).where(eq(users.id, loan.lenderId))
+  const lenderId = loan.lenderId
+  const lender = lenderId
+    ? (await db.select({
+        displayName: users.displayName,
+        email: users.email,
+      }).from(users).where(eq(users.id, lenderId)))[0] ?? null
+    : null
 
   const [borrower] = await db.select().from(users).where(eq(users.email, invitation.borrowerEmail))
 

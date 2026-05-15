@@ -14,13 +14,14 @@ import PinjamanBaruSuccessPage from "./pages/PinjamanBaruSuccessPage"
 import WaliAmanahPage from "./pages/WaliAmanahPage"
 import UndangWaliPage from "./pages/UndangWaliPage"
 import ProfilPage from "./pages/ProfilPage"
-import PengaturanPage from "./pages/PengaturanPage"
 import LoginPage from "./pages/LoginPage"
 import SignUpPage from "./pages/SignUpPage"
 import BorrowerDashboard from "./pages/BorrowerDashboard"
 import BorrowerLoanDetailPage from "./pages/BorrowerLoanDetailPage"
 import BorrowerProfilPage from "./pages/BorrowerProfilPage"
-import BorrowerPengaturanPage from "./pages/BorrowerPengaturanPage"
+import BorrowerApplyPage from "./pages/BorrowerApplyPage"
+import LenderApplicationsPage from "./pages/LenderApplicationsPage"
+import ApplicationDetailPage from "./pages/ApplicationDetailPage"
 import InvitationAcceptPage from "./pages/InvitationAcceptPage"
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -78,10 +79,11 @@ export default function App() {
           <Route path="/pinjaman/baru" element={<PinjamanBaruPage />} />
           <Route path="/pinjaman/baru/success" element={<PinjamanBaruSuccessPage />} />
           <Route path="/pinjaman/:id" element={<PinjamanDetailPage />} />
+          <Route path="/pengajuan" element={<LenderApplicationsPage />} />
+          <Route path="/pengajuan/:id" element={<ApplicationDetailPage />} />
           <Route path="/wali-amanah" element={<WaliAmanahPage />} />
           <Route path="/wali-amanah/undang" element={<UndangWaliPage />} />
           <Route path="/profil" element={<ProfilPage />} />
-          <Route path="/pengaturan" element={<PengaturanPage />} />
         </Route>
 
         <Route
@@ -93,8 +95,8 @@ export default function App() {
         >
           <Route path="/borrower" element={<BorrowerDashboard />} />
           <Route path="/borrower/pinjaman/:id" element={<BorrowerLoanDetailPage />} />
+          <Route path="/borrower/pengajuan" element={<BorrowerApplyPage />} />
           <Route path="/borrower/profil" element={<BorrowerProfilPage />} />
-          <Route path="/borrower/pengaturan" element={<BorrowerPengaturanPage />} />
         </Route>
 
         <Route path="*" element={<RoleRedirect />} />

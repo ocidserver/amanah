@@ -1,10 +1,12 @@
 import { Hono } from "hono"
-import { eq, and } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import { zValidator } from "@hono/zod-validator"
 import { z } from "zod"
 import { db } from "../db"
-import { installments, loans } from "../db/schema"
+import { installments, loans, users } from "../db/schema"
 import { authMiddleware, AuthEnv } from "../middleware/auth"
+import { checkAndCompleteLoan } from "../lib/loan-helpers"
+import { sendPaymentConfirmedEmail } from "../lib/email"
 
 const installmentRoutes = new Hono<AuthEnv>()
 
@@ -59,6 +61,26 @@ installmentRoutes.patch("/:id/confirm", authMiddleware, zValidator("json", confi
     .set(updateData)
     .where(eq(installments.id, id))
     .returning()
+
+  if (body.status === "paid") {
+    checkAndCompleteLoan(inst.loanId).catch(() => {})
+
+    const [loan] = await db.select().from(loans).where(eq(loans.id, inst.loanId))
+    if (loan) {
+      if (loan.lenderId) {
+        const [lenderUser] = await db.select({ email: users.email, displayName: users.displayName }).from(users).where(eq(users.id, loan.lenderId))
+        if (lenderUser?.email) {
+          sendPaymentConfirmedEmail(lenderUser.email, inst.periodLabel, inst.amount).catch(() => {})
+        }
+      }
+      if (loan.borrowerId) {
+        const [borrowerUser] = await db.select({ email: users.email, displayName: users.displayName }).from(users).where(eq(users.id, loan.borrowerId))
+        if (borrowerUser?.email) {
+          sendPaymentConfirmedEmail(borrowerUser.email, inst.periodLabel, inst.amount).catch(() => {})
+        }
+      }
+    }
+  }
 
   return c.json({ installment: updated })
 })

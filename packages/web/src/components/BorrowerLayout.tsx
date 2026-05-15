@@ -1,11 +1,10 @@
 import { Outlet, NavLink, Navigate } from "react-router-dom"
 import { useAuth } from "../hooks/use-auth"
-import { IconWallet, IconUser, IconSettings } from "./Icons"
+import { IconWallet, IconUser } from "./Icons"
 
 const navItems = [
   { to: "/borrower", label: "Pinjaman", Icon: IconWallet },
   { to: "/borrower/profil", label: "Profil", Icon: IconUser },
-  { to: "/borrower/pengaturan", label: "Pengaturan", Icon: IconSettings },
 ]
 
 export default function BorrowerLayout() {
@@ -27,7 +26,7 @@ export default function BorrowerLayout() {
       </main>
 
       <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 z-40 safe-bottom" role="navigation" aria-label="Navigasi peminjam">
-        <div className="max-w-lg mx-auto grid grid-cols-3">
+        <div className="max-w-lg mx-auto grid grid-cols-2">
           {navItems.map((item) => (
             <NavLink
               key={item.to}

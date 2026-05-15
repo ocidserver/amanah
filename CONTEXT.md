@@ -4,13 +4,15 @@
 
 ## Apa itu Amanah?
 
-Aplikasi mobile-friendly web app untuk mencatat **Qardhul Hasan** (pinjaman kebajikan Islam tanpa bunga). Fitur utama yang membedakan dari aplikasi hutang biasa:
+Aplikasi mobile-friendly web app untuk mencatat **Qardhul Hasan** (pinjaman kebajikan Islam tanpa bunga) berbasis **komunitas** (konsep BMT — Baitul Maal wat Tamwil). Fitur utama:
 
-- Identitas peminjam **tidak disimpan** — hanya kode unik (`AMN-XXXX`)
+- **Berbasis komunitas** — peminjam dan pemberi pinjaman adalah anggota komunitas yang saling kenal
+- Peminjam punya **akun sendiri** (bukan anonim) dengan tier yang naik seiring rekam jejak
 - Jaminan **dipegang wali amanah** (pihak ketiga), bukan pemberi pinjaman
-- Login via **email + password** dengan JWT
-- Fitur **"doa lunas"** — peminjam bisa kirim pesan syukur anonim saat melunasi
-- Data bisa **dihapus permanen** setelah lunas
+- Login via **email + password** dengan JWT (lender/borrower)
+- Fitur **"doa lunas"** — peminjam bisa kirim pesan syukur saat melunasi
+- **Pinjaman konsumtif & produktif** — bukan untuk ibadah (umroh/haji)
+- Tujuan pinjaman: Modal Usaha, Perumahan, Konsumtif, Pendidikan, Kesehatan, Kebutuhan Mendesak, Kebutuhan Keluarga, Pelunasan Hutang
 
 ---
 
@@ -129,7 +131,7 @@ trustee_requests               refresh_tokens
 └── created_at
 ```
 
-**Borrower tidak punya akun.** Mereka akses via `loan_code` saja melalui endpoint publik `GET /loans/code/:loanCode`.
+**Borrower punya akun sendiri.** Mereka login via email/password dan mengakses endpoint `/borrower/*` yang membutuhkan autentikasi.
 
 ---
 
@@ -190,6 +192,7 @@ Selalu gunakan istilah ini agar konsisten di kode, komentar, dan nama variabel:
 - **Zustand** + **React Query** untuk state management web
 - **Monorepo** structure (packages/web, packages/server, packages/shared)
 - **SVG Icons** di web (bukan emoji) — komponen di `Icons.tsx`
+- **Pinjaman konsumtif & produktif** — BUKAN untuk ibadah (umroh/haji)
 
 ---
 
@@ -263,12 +266,13 @@ API server: http://localhost:3001
 
 ## Hal yang TIDAK BOLEH dilakukan
 
-- Jangan simpan nama asli borrower di database dalam bentuk apapun
 - Jangan buat fitur "leaderboard" atau tampilan publik lender
 - Jangan tambahkan field untuk bunga/denda keterlambatan
 - Jangan gunakan `any` di TypeScript
 - Jangan expose `JWT_SECRET` ke client/web
 - Jangan expose `RESEND_API_KEY` ke client/web
+- Jangan tambahkan `worship` (ibadah) di loan_purpose — pinjaman bukan untuk ibadah
+- Jangan kembalikan fitur tracking anonim via loan_code — peminjam harus punya akun
 
 ---
 
