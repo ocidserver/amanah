@@ -1,0 +1,13 @@
+{
+  "name": "amanah-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@amanah/server & npm run dev --workspace=@amanah/web",
+    "dev:server": "npm run dev --workspace=@amanah/server",
+    "dev:web": "npm run dev --workspace=@amanah/web",
+    "build:web": "npm run build --workspace=@amanah/web"
+  }
+}
