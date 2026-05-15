@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useAuth } from "../hooks/use-auth"
 import { useNavigate } from "react-router-dom"
 import { api } from "../lib/api"
-import { IconLogOut, IconChevronRight, IconEdit, IconCheck, IconShield, IconMail } from "../components/Icons"
+import { IconLogOut, IconChevronRight, IconEdit, IconCheck, IconShield, IconMail, IconArrowRightLeft } from "../components/Icons"
 import { BORROWER_TIER_LABELS } from "@amanah/shared"
 import type { BorrowerTier } from "@amanah/shared"
 
@@ -25,6 +25,7 @@ function SettingItem({ icon, label, subtitle, onClick, danger }: {
         <p className="font-medium text-[15px]">{label}</p>
         {subtitle && <p className="text-xs text-gray-400 truncate">{subtitle}</p>}
       </div>
+      <IconChevronRight className="w-4 h-4 text-gray-300" />
     </button>
   )
 }
@@ -35,6 +36,7 @@ export default function BorrowerProfilPage() {
   const [editing, setEditing] = useState(false)
   const [editingProfile, setEditingProfile] = useState(false)
   const [showChangePassword, setShowChangePassword] = useState(false)
+  const [showRoleChange, setShowRoleChange] = useState(false)
   const [name, setName] = useState(user?.displayName || "")
   const [phone, setPhone] = useState(user?.phone || "")
   const [idNumber, setIdNumber] = useState(user?.idNumber || "")
@@ -47,6 +49,9 @@ export default function BorrowerProfilPage() {
   const [pwLoading, setPwLoading] = useState(false)
   const [pwError, setPwError] = useState("")
   const [pwSuccess, setPwSuccess] = useState(false)
+  const [roleChangeLoading, setRoleChangeLoading] = useState(false)
+  const [roleChangeError, setRoleChangeError] = useState("")
+  const [roleChangeSuccess, setRoleChangeSuccess] = useState(false)
 
   const handleSignOut = async () => {
     await signOut()
@@ -98,6 +103,19 @@ export default function BorrowerProfilPage() {
     }
   }
 
+  const handleRoleChange = async () => {
+    setRoleChangeLoading(true)
+    setRoleChangeError("")
+    try {
+      await api.post("/auth/role-change-request", { requestedRole: "lender" })
+      setRoleChangeSuccess(true)
+    } catch (err) {
+      setRoleChangeError(err instanceof Error ? err.message : "Gagal mengirim permintaan")
+    } finally {
+      setRoleChangeLoading(false)
+    }
+  }
+
   const initial = (user?.displayName?.[0] || user?.email?.[0] || "A").toUpperCase()
   const tierLabel = user?.borrowerTier ? BORROWER_TIER_LABELS[user.borrowerTier as BorrowerTier] : "Peminjam Baru"
   const isProfileComplete = user?.profileCompleted
@@ -136,6 +154,86 @@ export default function BorrowerProfilPage() {
             </button>
           </form>
         )}
+      </div>
+    )
+  }
+
+  if (showRoleChange) {
+    return (
+      <div className="px-4 pt-4 pb-6">
+        <button onClick={() => { setShowRoleChange(false); setRoleChangeSuccess(false); setRoleChangeError("") }} className="inline-flex items-center gap-1 text-sm text-gray-500 mb-4">
+          <IconChevronRight className="w-4 h-4 rotate-180" /> Kembali
+        </button>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Ubah Peran</h2>
+        {roleChangeSuccess ? (
+          <div className="text-center py-8">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-green-50 flex items-center justify-center">
+              <IconArrowRightLeft className="w-6 h-6 text-green-600" />
+            </div>
+            <p className="text-gray-900 font-semibold mb-1">Permintaan Terkirim</p>
+            <p className="text-gray-500 text-sm">Admin akan meninjau permintaan Anda.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <p className="text-sm font-medium text-blue-900">Ubah dari Peminjam ke Pemberi Pinjaman?</p>
+              <p className="text-xs text-blue-700 mt-1">
+                Permintaan ini akan ditinjau oleh admin. Proses bisa memakan waktu 1-2 hari kerja.
+              </p>
+            </div>
+            {roleChangeError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">{roleChangeError}</div>
+            )}
+            <button
+              onClick={handleRoleChange}
+              disabled={roleChangeLoading}
+              className="w-full bg-[var(--color-primary)] text-white rounded-xl py-3 font-semibold disabled:opacity-50"
+            >
+              {roleChangeLoading ? "Mengirim..." : "Kirim Permintaan"}
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  if (editingProfile) {
+    return (
+      <div className="px-4 pt-4 pb-6">
+        <button onClick={() => setEditingProfile(false)} className="inline-flex items-center gap-1 text-sm text-gray-500 mb-4">
+          <IconChevronRight className="w-4 h-4 rotate-180" /> Kembali
+        </button>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Edit Data Profil</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Telepon</label>
+            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="08xxxxxxxxxx" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">NIK / No. KTP</label>
+            <input type="text" value={idNumber} onChange={(e) => setIdNumber(e.target.value)} placeholder="16 digit NIK" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Alamat</label>
+            <textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Alamat lengkap" rows={2} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)] resize-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Pekerjaan</label>
+            <input type="text" value={occupation} onChange={(e) => setOccupation(e.target.value)} placeholder="Jenis pekerjaan" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]" />
+          </div>
+          <div className="flex gap-3">
+            <button onClick={handleSaveProfile} disabled={saving} className="flex-1 bg-[var(--color-primary)] text-white py-3 rounded-xl font-semibold disabled:opacity-50">
+              {saving ? "Menyimpan..." : "Simpan"}
+            </button>
+            <button onClick={() => setEditingProfile(false)} className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold">
+              Batal
+            </button>
+          </div>
+        </div>
       </div>
     )
   }
@@ -203,85 +301,49 @@ export default function BorrowerProfilPage() {
         </div>
       </div>
 
-      {editingProfile ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-4">
-          <h3 className="font-semibold text-gray-900 mb-4">Edit Data Profil</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Telepon</label>
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="08xxxxxxxxxx" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">NIK / No. KTP</label>
-              <input type="text" value={idNumber} onChange={(e) => setIdNumber(e.target.value)} placeholder="16 digit NIK" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Alamat</label>
-              <textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Alamat lengkap" rows={2} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)] resize-none" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Pekerjaan</label>
-              <input type="text" value={occupation} onChange={(e) => setOccupation(e.target.value)} placeholder="Jenis pekerjaan" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]" />
-            </div>
-            <div className="flex gap-3">
-              <button onClick={handleSaveProfile} disabled={saving} className="flex-1 bg-[var(--color-primary)] text-white py-3 rounded-xl font-semibold disabled:opacity-50">
-                {saving ? "Menyimpan..." : "Simpan"}
-              </button>
-              <button onClick={() => setEditingProfile(false)} className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold">
-                Batal
-              </button>
-            </div>
+      {(user?.phone || user?.idNumber || user?.address || user?.occupation) ? (
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4">
+          <div className="divide-y divide-gray-50">
+            {user?.phone && (
+              <div className="px-4 py-3 flex justify-between">
+                <span className="text-sm text-gray-500">Telepon</span>
+                <span className="text-sm font-medium text-gray-900">{user.phone}</span>
+              </div>
+            )}
+            {user?.idNumber && (
+              <div className="px-4 py-3 flex justify-between">
+                <span className="text-sm text-gray-500">NIK</span>
+                <span className="text-sm font-medium text-gray-900">{user.idNumber}</span>
+              </div>
+            )}
+            {user?.occupation && (
+              <div className="px-4 py-3 flex justify-between">
+                <span className="text-sm text-gray-500">Pekerjaan</span>
+                <span className="text-sm font-medium text-gray-900">{user.occupation}</span>
+              </div>
+            )}
+            {user?.address && (
+              <div className="px-4 py-3">
+                <span className="text-sm text-gray-500 block">Alamat</span>
+                <span className="text-sm font-medium text-gray-900">{user.address}</span>
+              </div>
+            )}
+            <button
+              onClick={() => setEditingProfile(true)}
+              className="w-full px-4 py-3 flex items-center justify-between text-[var(--color-primary)] active:bg-gray-50"
+            >
+              <span className="font-medium text-[15px]">Edit Data Profil</span>
+              <IconChevronRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4">
-          {(user?.phone || user?.idNumber || user?.address || user?.occupation) ? (
-            <div className="divide-y divide-gray-50">
-              {user?.phone && (
-                <div className="px-4 py-3 flex justify-between">
-                  <span className="text-sm text-gray-500">Telepon</span>
-                  <span className="text-sm font-medium text-gray-900">{user.phone}</span>
-                </div>
-              )}
-              {user?.idNumber && (
-                <div className="px-4 py-3 flex justify-between">
-                  <span className="text-sm text-gray-500">NIK</span>
-                  <span className="text-sm font-medium text-gray-900">{user.idNumber}</span>
-                </div>
-              )}
-              {user?.occupation && (
-                <div className="px-4 py-3 flex justify-between">
-                  <span className="text-sm text-gray-500">Pekerjaan</span>
-                  <span className="text-sm font-medium text-gray-900">{user.occupation}</span>
-                </div>
-              )}
-              {user?.address && (
-                <div className="px-4 py-3">
-                  <span className="text-sm text-gray-500 block">Alamat</span>
-                  <span className="text-sm font-medium text-gray-900">{user.address}</span>
-                </div>
-              )}
-              <button
-                onClick={() => setEditingProfile(true)}
-                className="w-full px-4 py-3 flex items-center justify-between text-[var(--color-primary)] active:bg-gray-50"
-              >
-                <span className="font-medium text-[15px]">Edit Data Profil</span>
-                <IconChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setEditingProfile(true)}
-              className="w-full px-4 py-4 text-center text-[var(--color-primary)] font-medium"
-            >
-              Lengkapi Data Profil
-            </button>
-          )}
-        </div>
+        <button
+          onClick={() => setEditingProfile(true)}
+          className="w-full bg-white rounded-2xl border border-gray-100 px-4 py-4 text-center text-[var(--color-primary)] font-medium mb-4"
+        >
+          Lengkapi Data Profil
+        </button>
       )}
 
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4">
@@ -299,6 +361,13 @@ export default function BorrowerProfilPage() {
           label="Keamanan"
           subtitle="Ubah password"
           onClick={() => setShowChangePassword(true)}
+        />
+        <div className="h-px bg-gray-100 ml-12" />
+        <SettingItem
+          icon={<IconArrowRightLeft className="w-5 h-5" />}
+          label="Ubah Peran"
+          subtitle="Peminjam → Pemberi Pinjaman"
+          onClick={() => setShowRoleChange(true)}
         />
       </div>
 

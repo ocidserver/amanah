@@ -20,6 +20,7 @@ export const trusteeTypeEnum = pgEnum("trustee_type", ["personal", "institution"
 export const trusteeRequestStatusEnum = pgEnum("trustee_request_status", ["pending", "accepted", "declined"])
 export const loanPurposeEnum = pgEnum("loan_purpose", ["business_capital", "home", "consumables", "education", "health", "urgent_needs", "family_needs", "debt_consolidation"])
 export const invitationStatusEnum = pgEnum("invitation_status", ["pending", "accepted", "expired"])
+export const roleChangeStatusEnum = pgEnum("role_change_status", ["pending", "approved", "rejected"])
 export const borrowerTierEnum = pgEnum("borrower_tier", ["baru", "kecil", "menengah", "utama"])
 export const lenderTierEnum = pgEnum("lender_tier", ["pemula", "penolong", "dermawan", "mujir"])
 export const biCheckStatusEnum = pgEnum("bi_check_status", ["pending", "approved", "rejected", "review"])
@@ -29,7 +30,7 @@ export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
-  role: userRoleEnum("role").default("lender").notNull(),
+  role: userRoleEnum("role"),
   displayName: text("display_name"),
   phone: text("phone"),
   idNumber: text("id_number"),
@@ -37,6 +38,7 @@ export const users = pgTable("users", {
   occupation: text("occupation"),
   ktpDocumentUrl: text("ktp_document_url"),
   profileCompleted: boolean("profile_completed").default(false).notNull(),
+  isVerified: boolean("is_verified").default(false).notNull(),
   borrowerTier: borrowerTierEnum("borrower_tier"),
   lenderTier: lenderTierEnum("lender_tier"),
   rating: numeric("rating", { precision: 3, scale: 2 }),
@@ -69,6 +71,7 @@ export const loans = pgTable("loans", {
   installmentType: installmentTypeEnum("installment_type").default("monthly").notNull(),
   purpose: loanPurposeEnum("purpose").default("urgent_needs").notNull(),
   collateralType: collateralTypeEnum("collateral_type").default("none").notNull(),
+  collateralDescription: text("collateral_description"),
   collateralStatus: collateralStatusEnum("collateral_status").default("pending").notNull(),
   notesEncrypted: text("notes_encrypted"),
   applicationNote: text("application_note"),
@@ -155,7 +158,7 @@ export const roleChangeRequests = pgTable("role_change_requests", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id").references(() => users.id).notNull(),
   requestedRole: userRoleEnum("requested_role").notNull(),
-  status: invitationStatusEnum("status").default("pending").notNull(),
+  status: roleChangeStatusEnum("status").default("pending").notNull(),
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 })
@@ -177,5 +180,14 @@ export const paymentProofs = pgTable("payment_proofs", {
   verifiedBy: uuid("verified_by").references(() => users.id),
   verifiedAt: timestamp("verified_at", { withTimezone: true }),
   uploadedAt: timestamp("uploaded_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+})
+
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 })

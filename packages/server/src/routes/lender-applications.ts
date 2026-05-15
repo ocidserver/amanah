@@ -8,6 +8,7 @@ import { authMiddleware, AuthEnv } from "../middleware/auth"
 import { lenderOnlyMiddleware } from "../middleware/role"
 import { checkAndCompleteLoan } from "../lib/loan-helpers"
 import { sendLoanCreatedEmail } from "../lib/email"
+import { generateContractPdf } from "../lib/contract"
 
 const app = new Hono<AuthEnv>()
 
@@ -169,6 +170,37 @@ app.patch("/applications/:id/approve", async (c) => {
     sendLoanCreatedEmail(lenderUser.email, loan.borrowerAlias, loan.amount, loan.id).catch(() => {})
   }
 
+  // Generate contract PDF
+  try {
+    const [trusteeData] = loan.trusteeId
+      ? await db.select({ name: trustees.name }).from(trustees).where(eq(trustees.id, loan.trusteeId))
+      : []
+
+    const contractUrl = await generateContractPdf({
+      loanId: loan.id,
+      lenderName: lenderUser?.displayName || lenderUser?.email || "Pemberi Pinjaman",
+      borrowerAlias: loan.borrowerAlias,
+      amount: loan.amount,
+      durationMonths: loan.durationMonths,
+      installmentType: loan.installmentType,
+      purpose: loan.purpose,
+      collateralType: loan.collateralType,
+      ujrah: loan.ujrah,
+      stampFee: loan.stampFee,
+      adminFee: loan.adminFee,
+      custodyFee: loan.custodyFee,
+      totalFee: loan.totalFee,
+      disbursedAmount: loan.disbursedAmount,
+      startDate: new Date().toISOString().split("T")[0],
+      dueDate: new Date(Date.now() + loan.durationMonths * 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      trusteeName: trusteeData?.name,
+    })
+
+    await db.update(loans).set({ contractUrl }).where(eq(loans.id, id))
+  } catch (err) {
+    console.error("Failed to generate contract:", err)
+  }
+
   if (loan.trusteeId && loan.collateralType !== "none") {
     await db.insert(trusteeRequests).values({
       loanId: loan.id,
@@ -179,7 +211,7 @@ app.patch("/applications/:id/approve", async (c) => {
     const [trustee] = await db.select({ email: trustees.email, name: trustees.name }).from(trustees).where(eq(trustees.id, loan.trusteeId))
     if (trustee?.email) {
       const { sendTrusteeInvitationEmail } = await import("../lib/email")
-      sendTrusteeInvitationEmail(trustee.email, lenderUser?.displayName || lenderUser?.email || "Pemberi Pinjaman").catch(() => {})
+      sendTrusteeInvitationEmail(trustee.email, lenderUser?.displayName || lenderUser?.email || "Pemberi Pinjaman", loan.id).catch(() => {})
     }
   }
 

@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/use-auth"
 import { api } from "../lib/api"
-import { IconLogOut, IconChevronRight, IconShield, IconMail, IconUser, IconArrowRightLeft } from "../components/Icons"
+import { IconLogOut, IconChevronRight, IconShield, IconMail, IconArrowRightLeft } from "../components/Icons"
 
 function SettingItem({ icon, label, subtitle, onClick, danger }: {
   icon: React.ReactNode
@@ -28,7 +28,7 @@ function SettingItem({ icon, label, subtitle, onClick, danger }: {
   )
 }
 
-export default function BorrowerPengaturanPage() {
+export default function TrusteePengaturanPage() {
   const { signOut, user } = useAuth()
   const navigate = useNavigate()
   const [showChangePassword, setShowChangePassword] = useState(false)
@@ -134,7 +134,7 @@ export default function BorrowerPengaturanPage() {
         ) : (
           <div className="space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <p className="text-sm font-medium text-blue-900">Ubah dari Peminjam ke Pemberi Pinjaman?</p>
+              <p className="text-sm font-medium text-blue-900">Ubah dari Wali Amanah ke Pemberi Pinjaman?</p>
               <p className="text-xs text-blue-700 mt-1">
                 Permintaan ini akan ditinjau oleh admin. Proses bisa memakan waktu 1-2 hari kerja.
               </p>
@@ -179,7 +179,7 @@ export default function BorrowerPengaturanPage() {
         <SettingItem
           icon={<IconArrowRightLeft className="w-5 h-5" />}
           label="Ubah Peran"
-          subtitle="Peminjam → Pemberi Pinjaman"
+          subtitle="Wali Amanah → Pemberi Pinjaman"
           onClick={() => setShowRoleChange(true)}
         />
       </div>

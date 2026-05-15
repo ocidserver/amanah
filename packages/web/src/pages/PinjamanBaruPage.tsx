@@ -17,6 +17,7 @@ export default function PinjamanBaruPage() {
     purpose: "urgent_needs" as string,
     collateralType: "none" as string,
     trusteeId: "",
+    notes: "",
     hideBorrower: true,
     reminderEnabled: true,
     doaLunasEnabled: true,
@@ -78,6 +79,9 @@ export default function PinjamanBaruPage() {
       }
       if (form.borrowerEmail.trim()) {
         payload.borrowerEmail = form.borrowerEmail.trim().toLowerCase()
+      }
+      if (form.notes.trim()) {
+        payload.notesEncrypted = form.notes.trim()
       }
       const result = await api.post<{ loan: Record<string, unknown>; invitationSent?: boolean }>("/loans", payload)
       navigate("/pinjaman/baru/success", { state: { loan: result.loan, invitationSent: !!result.invitationSent, borrowerEmail: form.borrowerEmail.trim() } })
@@ -210,6 +214,19 @@ export default function PinjamanBaruPage() {
           {trustees.length === 0 && (
             <p className="text-xs text-gray-400 mt-1">Belum ada wali amanah. <a href="/wali-amanah/undang" className="text-[var(--color-primary)] underline">Undang sekarang</a></p>
           )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Catatan <span className="text-gray-400 font-normal">(opsional)</span></label>
+          <textarea
+            value={form.notes}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none"
+            rows={3}
+            placeholder="Catatan tambahan untuk pinjaman ini..."
+            maxLength={500}
+          />
+          <p className="text-xs text-gray-400 mt-1">{form.notes.length}/500</p>
         </div>
 
         <div className="space-y-3 pt-2">

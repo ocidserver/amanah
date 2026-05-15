@@ -1,6 +1,6 @@
 import { Outlet, NavLink, Navigate } from "react-router-dom"
 import { useAuth } from "../hooks/use-auth"
-import { IconHome, IconLoan, IconTrustee, IconUser, IconSettings } from "./Icons"
+import { IconHome, IconLoan, IconTrustee, IconUser } from "./Icons"
 
 const navItems = [
   { to: "/dashboard", label: "Beranda", Icon: IconHome },
@@ -28,15 +28,15 @@ export default function Layout() {
       </main>
 
       <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 z-40 safe-bottom" role="navigation" aria-label="Navigasi utama">
-        <div className="max-w-lg mx-auto grid grid-cols-5">
+        <div className="max-w-lg mx-auto grid grid-cols-4">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === "/"}
+              end={item.to === "/dashboard"}
               aria-label={item.label}
               className={({ isActive }) =>
-                `flex flex-col items-center py-2 pt-2.5 text-[10px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 ${
+                `flex flex-col items-center justify-center py-2 text-[10px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 ${
                   isActive
                     ? "text-[var(--color-primary)]"
                     : "text-gray-400 hover:text-gray-600"
@@ -45,7 +45,7 @@ export default function Layout() {
             >
               {({ isActive }) => (
                 <>
-                  <item.Icon className={`w-[22px] h-[22px] mb-0.5 ${isActive ? "stroke-[2.5]" : "stroke-[1.5]"}`} />
+                  <item.Icon className={`w-5 h-5 mb-0.5 ${isActive ? "stroke-[2.5]" : "stroke-[1.5]"}`} />
                   <span className={isActive ? "font-semibold" : "font-normal"}>{item.label}</span>
                 </>
               )}

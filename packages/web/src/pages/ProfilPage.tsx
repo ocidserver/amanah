@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useAuth } from "../hooks/use-auth"
 import { useNavigate } from "react-router-dom"
 import { api } from "../lib/api"
-import { IconLogOut, IconChevronRight, IconEdit, IconCheck, IconShield, IconMail } from "../components/Icons"
+import { IconLogOut, IconChevronRight, IconEdit, IconCheck, IconShield, IconMail, IconArrowRightLeft } from "../components/Icons"
 import { LENDER_TIER_LABELS } from "@amanah/shared"
 import type { LenderTier } from "@amanah/shared"
 
@@ -25,6 +25,7 @@ function SettingItem({ icon, label, subtitle, onClick, danger }: {
         <p className="font-medium text-[15px]">{label}</p>
         {subtitle && <p className="text-xs text-gray-400 truncate">{subtitle}</p>}
       </div>
+      <IconChevronRight className="w-4 h-4 text-gray-300" />
     </button>
   )
 }
@@ -34,6 +35,7 @@ export default function ProfilPage() {
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
   const [showChangePassword, setShowChangePassword] = useState(false)
+  const [showRoleChange, setShowRoleChange] = useState(false)
   const [name, setName] = useState(user?.displayName || "")
   const [saving, setSaving] = useState(false)
   const [currentPassword, setCurrentPassword] = useState("")
@@ -42,6 +44,9 @@ export default function ProfilPage() {
   const [pwLoading, setPwLoading] = useState(false)
   const [pwError, setPwError] = useState("")
   const [pwSuccess, setPwSuccess] = useState(false)
+  const [roleChangeLoading, setRoleChangeLoading] = useState(false)
+  const [roleChangeError, setRoleChangeError] = useState("")
+  const [roleChangeSuccess, setRoleChangeSuccess] = useState(false)
 
   const handleSignOut = async () => {
     await signOut()
@@ -73,6 +78,19 @@ export default function ProfilPage() {
       setPwError(err instanceof Error ? err.message : "Gagal mengubah password")
     } finally {
       setPwLoading(false)
+    }
+  }
+
+  const handleRoleChange = async () => {
+    setRoleChangeLoading(true)
+    setRoleChangeError("")
+    try {
+      await api.post("/auth/role-change-request", { requestedRole: "borrower" })
+      setRoleChangeSuccess(true)
+    } catch (err) {
+      setRoleChangeError(err instanceof Error ? err.message : "Gagal mengirim permintaan")
+    } finally {
+      setRoleChangeLoading(false)
     }
   }
 
@@ -112,6 +130,45 @@ export default function ProfilPage() {
               {pwLoading ? "Menyimpan..." : "Ubah Password"}
             </button>
           </form>
+        )}
+      </div>
+    )
+  }
+
+  if (showRoleChange) {
+    return (
+      <div className="px-4 pt-4 pb-6">
+        <button onClick={() => { setShowRoleChange(false); setRoleChangeSuccess(false); setRoleChangeError("") }} className="inline-flex items-center gap-1 text-sm text-gray-500 mb-4">
+          <IconChevronRight className="w-4 h-4 rotate-180" /> Kembali
+        </button>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Ubah Peran</h2>
+        {roleChangeSuccess ? (
+          <div className="text-center py-8">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-green-50 flex items-center justify-center">
+              <IconArrowRightLeft className="w-6 h-6 text-green-600" />
+            </div>
+            <p className="text-gray-900 font-semibold mb-1">Permintaan Terkirim</p>
+            <p className="text-gray-500 text-sm">Admin akan meninjau permintaan Anda.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <p className="text-sm font-medium text-blue-900">Ubah dari Pemberi Pinjaman ke Peminjam?</p>
+              <p className="text-xs text-blue-700 mt-1">
+                Permintaan ini akan ditinjau oleh admin. Proses bisa memakan waktu 1-2 hari kerja.
+              </p>
+            </div>
+            {roleChangeError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">{roleChangeError}</div>
+            )}
+            <button
+              onClick={handleRoleChange}
+              disabled={roleChangeLoading}
+              className="w-full bg-[var(--color-primary)] text-white rounded-xl py-3 font-semibold disabled:opacity-50"
+            >
+              {roleChangeLoading ? "Mengirim..." : "Kirim Permintaan"}
+            </button>
+          </div>
         )}
       </div>
     )
@@ -175,6 +232,13 @@ export default function ProfilPage() {
           label="Keamanan"
           subtitle="Ubah password"
           onClick={() => setShowChangePassword(true)}
+        />
+        <div className="h-px bg-gray-100 ml-12" />
+        <SettingItem
+          icon={<IconArrowRightLeft className="w-5 h-5" />}
+          label="Ubah Peran"
+          subtitle="Pemberi Pinjaman → Peminjam"
+          onClick={() => setShowRoleChange(true)}
         />
       </div>
 

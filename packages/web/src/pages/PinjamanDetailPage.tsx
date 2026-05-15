@@ -3,15 +3,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { api } from "../lib/api"
 import { formatCurrency, formatDate } from "../lib/utils"
-import { IconChevronLeft, IconClock, IconCheck } from "../components/Icons"
+import { IconChevronLeft, IconClock, IconCheck, IconCheckCircle, IconXCircle } from "../components/Icons"
 import { LOAN_PURPOSE, LOAN_STATUS } from "@amanah/shared"
-import type { ILoan, IInstallment, ICompletionMessage } from "@amanah/shared"
+import type { ILoan, IInstallment, ICompletionMessage, IPaymentProof } from "@amanah/shared"
 
 export default function PinjamanDetailPage() {
   const { id } = useParams<{ id: string }>()
   const queryClient = useQueryClient()
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
   const [statusError, setStatusError] = useState("")
+  const [verifyingProofId, setVerifyingProofId] = useState<string | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ["loan", id],
@@ -24,6 +25,27 @@ export default function PinjamanDetailPage() {
     enabled: !!id,
   })
 
+  // Fetch payment proofs for all installments
+  const { data: proofsMap } = useQuery({
+    queryKey: ["payment-proofs", id],
+    queryFn: async () => {
+      if (!data?.installments) return {}
+      const proofs: Record<string, IPaymentProof | null> = {}
+      await Promise.all(
+        data.installments.map(async (inst) => {
+          try {
+            const res = await api.get<{ proof: IPaymentProof | null }>(`/payment-proofs/installments/${inst.id}`)
+            proofs[inst.id] = res.proof
+          } catch {
+            proofs[inst.id] = null
+          }
+        })
+      )
+      return proofs
+    },
+    enabled: !!data?.installments,
+  })
+
   const confirmMutation = useMutation({
     mutationFn: (installmentId: string) =>
       api.patch<{ installment: IInstallment }>(`/installments/${installmentId}/confirm`, {
@@ -32,10 +54,24 @@ export default function PinjamanDetailPage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["loan", id] })
+      queryClient.invalidateQueries({ queryKey: ["payment-proofs", id] })
       setConfirmingId(null)
     },
     onError: () => {
       setConfirmingId(null)
+    },
+  })
+
+  const verifyProofMutation = useMutation({
+    mutationFn: ({ proofId, status }: { proofId: string; status: "verified" | "rejected" }) =>
+      api.patch<{ proof: IPaymentProof }>(`/payment-proofs/${proofId}/verify`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["loan", id] })
+      queryClient.invalidateQueries({ queryKey: ["payment-proofs", id] })
+      setVerifyingProofId(null)
+    },
+    onError: () => {
+      setVerifyingProofId(null)
     },
   })
 
@@ -54,6 +90,11 @@ export default function PinjamanDetailPage() {
   const handleConfirm = (installmentId: string) => {
     setConfirmingId(installmentId)
     confirmMutation.mutate(installmentId)
+  }
+
+  const handleVerifyProof = (proofId: string, status: "verified" | "rejected") => {
+    setVerifyingProofId(proofId)
+    verifyProofMutation.mutate({ proofId, status })
   }
 
   if (isLoading) {
@@ -150,39 +191,81 @@ export default function PinjamanDetailPage() {
         <p className="text-gray-400 text-sm">Belum ada cicilan</p>
       ) : (
         <div className="space-y-2">
-          {installments.map((inst) => (
-            <div key={inst.id} className="bg-white rounded-xl border border-gray-100 px-4 py-3 flex items-center gap-3">
-              {inst.status === "paid" ? (
-                <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center shrink-0">
-                  <IconCheck className="w-4 h-4 text-green-600" />
+          {installments.map((inst) => {
+            const proof = proofsMap?.[inst.id]
+            const isVerifying = verifyingProofId === proof?.id
+
+            return (
+              <div key={inst.id} className="bg-white rounded-xl border border-gray-100 px-4 py-3">
+                <div className="flex items-center gap-3">
+                  {inst.status === "paid" ? (
+                    <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center shrink-0">
+                      <IconCheck className="w-4 h-4 text-green-600" />
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
+                      <IconClock className="w-4 h-4 text-gray-400" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 text-sm">{inst.periodLabel}</p>
+                    <p className="text-xs text-gray-400">{formatDate(inst.dueDate)}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="font-semibold text-gray-900 text-sm">{formatCurrency(inst.amount)}</p>
+                    {inst.status === "paid" ? (
+                      <p className="text-xs text-green-600">Lunas</p>
+                    ) : proof?.status === "verified" ? (
+                      <p className="text-xs text-green-600">Terverifikasi</p>
+                    ) : proof?.status === "rejected" ? (
+                      <p className="text-xs text-red-600">Ditolak</p>
+                    ) : proof?.status === "pending" ? (
+                      <p className="text-xs text-yellow-600">Menunggu Verifikasi</p>
+                    ) : inst.status === "processing" ? (
+                      <p className="text-xs text-yellow-600">Diproses</p>
+                    ) : (
+                      <button
+                        onClick={() => handleConfirm(inst.id)}
+                        disabled={confirmingId === inst.id}
+                        className="text-xs text-[var(--color-primary)] font-medium hover:underline disabled:opacity-50"
+                      >
+                        {confirmingId === inst.id ? "Menyimpan..." : "Tandai Lunas"}
+                      </button>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
-                  <IconClock className="w-4 h-4 text-gray-400" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900 text-sm">{inst.periodLabel}</p>
-                <p className="text-xs text-gray-400">{formatDate(inst.dueDate)}</p>
-              </div>
-              <div className="text-right shrink-0">
-                <p className="font-semibold text-gray-900 text-sm">{formatCurrency(inst.amount)}</p>
-                {inst.status === "paid" ? (
-                  <p className="text-xs text-green-600">Lunas</p>
-                ) : inst.status === "processing" ? (
-                  <p className="text-xs text-yellow-600">Diproses</p>
-                ) : (
-                  <button
-                    onClick={() => handleConfirm(inst.id)}
-                    disabled={confirmingId === inst.id}
-                    className="text-xs text-[var(--color-primary)] font-medium hover:underline disabled:opacity-50"
-                  >
-                    {confirmingId === inst.id ? "Menyimpan..." : "Tandai Lunas"}
-                  </button>
+
+                {/* Proof Section */}
+                {proof && proof.status === "pending" && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs font-medium text-gray-500">Bukti Transfer:</span>
+                      <span className="text-xs bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded">Pending</span>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-2 mb-3 flex items-center justify-center h-32 border border-gray-200">
+                      <img src={proof.imageUrl} alt="Bukti Transfer" className="max-h-full max-w-full object-contain" />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleVerifyProof(proof.id, "verified")}
+                        disabled={isVerifying}
+                        className="flex-1 bg-green-600 text-white rounded-lg py-2 text-xs font-medium flex items-center justify-center gap-1 hover:bg-green-700 disabled:opacity-50"
+                      >
+                        {isVerifying ? "..." : <><IconCheckCircle className="w-4 h-4" /> Verifikasi</>}
+                      </button>
+                      <button
+                        onClick={() => handleVerifyProof(proof.id, "rejected")}
+                        disabled={isVerifying}
+                        className="flex-1 bg-white border border-red-200 text-red-600 rounded-lg py-2 text-xs font-medium flex items-center justify-center gap-1 hover:bg-red-50 disabled:opacity-50"
+                      >
+                        {isVerifying ? "..." : <><IconXCircle className="w-4 h-4" /> Tolak</>}
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

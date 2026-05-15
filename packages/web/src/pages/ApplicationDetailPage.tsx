@@ -46,6 +46,14 @@ export default function ApplicationDetailPage() {
     },
   })
 
+  const activateMutation = useMutation({
+    mutationFn: () => api.patch<{ loan: ILoan }>(`/lender-app/applications/${id}/activate`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["application", id] })
+      queryClient.invalidateQueries({ queryKey: ["lender-applications"] })
+    },
+  })
+
   if (isLoading || !data) {
     return (
       <div className="px-4 pt-4 pb-4">
@@ -156,6 +164,12 @@ export default function ApplicationDetailPage() {
               <span className="text-gray-500">Jenis Jaminan</span>
               <span className="font-medium">{COLLATERAL_TYPE[loan.collateralType]}</span>
             </div>
+            {loan.collateralDescription && (
+              <div className="mt-2 pt-2 border-t border-gray-100">
+                <span className="text-gray-500 block mb-1">Deskripsi Jaminan</span>
+                <p className="text-gray-800">{loan.collateralDescription}</p>
+              </div>
+            )}
             {loan.applicationNote && (
               <div className="mt-2 pt-2 border-t border-gray-100">
                 <span className="text-gray-500 block mb-1">Catatan Peminjam</span>
@@ -213,10 +227,27 @@ export default function ApplicationDetailPage() {
         )}
 
         {isApproved && (
-          <div className="bg-green-50 rounded-2xl p-4 text-center">
-            <IconCheck className="w-8 h-8 text-green-600 mx-auto mb-2" />
-            <p className="text-green-800 font-semibold">Pengajuan Disetujui</p>
-            <p className="text-green-700 text-sm mt-1">Anda bisa mengaktifkan pinjaman setelah jaminan diverifikasi oleh wali amanah.</p>
+          <div className="space-y-3">
+            <div className="bg-green-50 rounded-2xl p-4 text-center border border-green-200">
+              <IconCheck className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              <p className="text-green-800 font-semibold">Pengajuan Disetujui</p>
+              <p className="text-green-700 text-sm mt-1">Menunggu verifikasi jaminan oleh wali amanah.</p>
+            </div>
+            <button
+              onClick={() => {
+                if (confirm("Aktifkan pinjaman ini? Pastikan jaminan sudah diverifikasi oleh wali amanah.")) {
+                  activateMutation.mutate()
+                }
+              }}
+              disabled={activateMutation.isPending}
+              className="w-full bg-[var(--color-primary)] text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <IconCheck className="w-5 h-5" />
+              {activateMutation.isPending ? "Mengaktifkan..." : "Aktifkan Pinjaman"}
+            </button>
+            {activateMutation.isSuccess && (
+              <p className="text-green-600 text-sm text-center">Pinjaman berhasil diaktifkan!</p>
+            )}
           </div>
         )}
 

@@ -24,6 +24,11 @@ trusteeAppRoutes.get("/profile", async (c) => {
 
   const trustee = trusteeRows[0]
 
+  const [userRow] = await db
+    .select({ isVerified: users.isVerified, displayName: users.displayName, email: users.email, phone: users.phone, idNumber: users.idNumber, ktpDocumentUrl: users.ktpDocumentUrl })
+    .from(users)
+    .where(eq(users.id, user.userId))
+
   const pendingRequests = await db
     .select({
       id: trusteeRequests.id,
@@ -38,6 +43,7 @@ trusteeAppRoutes.get("/profile", async (c) => {
         durationMonths: loans.durationMonths,
         purpose: loans.purpose,
         collateralType: loans.collateralType,
+        collateralDescription: loans.collateralDescription,
         collateralStatus: loans.collateralStatus,
         status: loans.status,
         borrowerAlias: loans.borrowerAlias,
@@ -59,6 +65,7 @@ trusteeAppRoutes.get("/profile", async (c) => {
         durationMonths: loans.durationMonths,
         purpose: loans.purpose,
         collateralType: loans.collateralType,
+        collateralDescription: loans.collateralDescription,
         collateralStatus: loans.collateralStatus,
         status: loans.status,
         borrowerAlias: loans.borrowerAlias,
@@ -71,10 +78,54 @@ trusteeAppRoutes.get("/profile", async (c) => {
 
   return c.json({
     trustee,
+    user: userRow,
     pendingRequests,
     heldCollateral,
   })
 })
+
+trusteeAppRoutes.patch(
+  "/profile",
+  zValidator("json", z.object({
+    name: z.string().min(1).optional(),
+    type: z.enum(["personal", "institution"]).optional(),
+    institution: z.string().optional(),
+    email: z.string().email().optional().or(z.literal("")),
+  })),
+  async (c) => {
+    const user = c.get("user")
+    const body = c.req.valid("json")
+
+    const trusteeRows = await db
+      .select()
+      .from(trustees)
+      .where(eq(trustees.profileId, user.userId))
+
+    if (trusteeRows.length === 0) {
+      return c.json({ error: "Profil wali amanah tidak ditemukan" }, 404)
+    }
+
+    const trustee = trusteeRows[0]
+    const updates: Record<string, unknown> = {}
+
+    if (body.name !== undefined) updates.name = body.name
+    if (body.type !== undefined) updates.type = body.type
+    if (body.institution !== undefined) updates.institution = body.institution
+    if (body.email !== undefined) updates.email = body.email || null
+
+    if (Object.keys(updates).length === 0) {
+      return c.json({ error: "Tidak ada perubahan" }, 400)
+    }
+
+    const [updated] = await db
+      .update(trustees)
+      .set(updates)
+      .where(eq(trustees.id, trustee.id))
+      .returning()
+
+    return c.json({ trustee: updated })
+  }
+)
 
 trusteeAppRoutes.get("/requests", async (c) => {
   const user = c.get("user")
@@ -104,6 +155,7 @@ trusteeAppRoutes.get("/requests", async (c) => {
         durationMonths: loans.durationMonths,
         purpose: loans.purpose,
         collateralType: loans.collateralType,
+        collateralDescription: loans.collateralDescription,
         collateralStatus: loans.collateralStatus,
         status: loans.status,
         borrowerAlias: loans.borrowerAlias,
@@ -203,6 +255,54 @@ trusteeAppRoutes.patch("/requests/:id/decline", async (c) => {
 
   return c.json({ request: updated })
 })
+
+trusteeAppRoutes.patch(
+  "/loans/:loanId/collateral-verify",
+  zValidator("json", z.object({
+    isVerified: z.boolean(),
+    notes: z.string().optional(),
+  })),
+  async (c) => {
+    const user = c.get("user")
+    const loanId = c.req.param("loanId")!
+    const { isVerified, notes } = c.req.valid("json")
+
+    const trusteeRows = await db
+      .select()
+      .from(trustees)
+      .where(eq(trustees.profileId, user.userId))
+
+    if (trusteeRows.length === 0) {
+      return c.json({ error: "Profil wali amanah tidak ditemukan" }, 404)
+    }
+
+    const trustee = trusteeRows[0]
+
+    const [loan] = await db.select().from(loans).where(eq(loans.id, loanId))
+
+    if (!loan) {
+      return c.json({ error: "Pinjaman tidak ditemukan" }, 404)
+    }
+
+    if (loan.trusteeId !== trustee.id) {
+      return c.json({ error: "Anda bukan wali amanah untuk pinjaman ini" }, 403)
+    }
+
+    if (loan.collateralStatus !== "held") {
+      return c.json({ error: "Jaminan harus dalam status dipegang" }, 400)
+    }
+
+    const newStatus = isVerified ? "verified" : "held"
+
+    const [updated] = await db
+      .update(loans)
+      .set({ collateralStatus: newStatus, updatedAt: new Date() })
+      .where(eq(loans.id, loanId))
+      .returning()
+
+    return c.json({ loan: updated })
+  }
+)
 
 trusteeAppRoutes.patch("/loans/:loanId/collateral-return", async (c) => {
   const user = c.get("user")

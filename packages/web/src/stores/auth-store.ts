@@ -5,7 +5,7 @@ import type { UserRole } from "@amanah/shared"
 interface IUser {
   id: string
   email: string
-  role: UserRole
+  role: UserRole | null
   displayName: string | null
   phone: string | null
   idNumber: string | null
@@ -13,6 +13,7 @@ interface IUser {
   occupation: string | null
   ktpDocumentUrl: string | null
   profileCompleted: boolean
+  isVerified: boolean
   borrowerTier: string | null
   lenderTier: string | null
   rating: string | null
@@ -23,12 +24,14 @@ interface IAuthState {
   user: IUser | null
   isLoading: boolean
   isAuthenticated: boolean
-  register: (email: string, password: string, displayName?: string, role?: UserRole) => Promise<void>
+  register: (email: string, password: string, displayName?: string) => Promise<void>
   login: (email: string, password: string) => Promise<void>
+  setRole: (role: UserRole) => Promise<void>
   signOut: () => Promise<void>
   restoreSession: () => Promise<void>
   fetchProfile: () => Promise<void>
   updateProfile: (displayName: string) => Promise<void>
+  uploadKtp: (file: File) => Promise<string>
 }
 
 export const useAuthStore = create<IAuthState>((set, get) => ({
@@ -37,12 +40,12 @@ export const useAuthStore = create<IAuthState>((set, get) => ({
   isLoading: true,
   isAuthenticated: false,
 
-  register: async (email: string, password: string, displayName?: string, role?: UserRole) => {
+  register: async (email: string, password: string, displayName?: string) => {
     const data = await api.post<{
       accessToken: string
       refreshToken: string
       user: IUser
-    }>("/auth/register", { email, password, displayName, role: role ?? "lender" })
+    }>("/auth/register", { email, password, displayName })
 
     await setTokens(data.accessToken, data.refreshToken)
     set({
@@ -64,6 +67,20 @@ export const useAuthStore = create<IAuthState>((set, get) => ({
       accessToken: data.accessToken,
       user: data.user,
       isAuthenticated: true,
+    })
+  },
+
+  setRole: async (role: UserRole) => {
+    const data = await api.post<{
+      user: IUser
+      accessToken: string
+      refreshToken: string
+    }>("/auth/set-role", { role })
+
+    await setTokens(data.accessToken, data.refreshToken)
+    set({
+      user: data.user,
+      accessToken: data.accessToken,
     })
   },
 
@@ -111,5 +128,23 @@ export const useAuthStore = create<IAuthState>((set, get) => ({
   updateProfile: async (displayName: string) => {
     const updated = await api.patch<IUser>("/auth/me", { displayName })
     set({ user: updated })
+  },
+
+  uploadKtp: async (file: File) => {
+    const formData = new FormData()
+    formData.append("image", file)
+    const token = getAccessToken()
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/upload-ktp`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    })
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err.error || "Gagal upload KTP")
+    }
+    const data = await res.json()
+    await get().fetchProfile()
+    return data.ktpDocumentUrl as string
   },
 }))

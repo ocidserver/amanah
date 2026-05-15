@@ -69,19 +69,29 @@
 - [x] Both server and web builds pass clean
 
 ### In Progress
-- [ ] B1: Trustee verification — activate trustee_requests flow
-- [ ] C1: Transfer proof upload — payment_proofs endpoints + web UI
-- [ ] C2: Reminder H-3/H-0 — cron endpoint + scheduled logic
-- [ ] Contract PDF generation + e-signature
+- (none)
 
 ### Blocked
 - (none)
 
+## Fase 4: Onboarding Flow ✅
+
+- [x] Server: Registration without role — role is now optional, defaults to null
+- [x] Server: POST /auth/set-role endpoint for setting role after registration
+- [x] Server: JWT payload uses "pending" for null role
+- [x] Server: DB schema updated — role column is now nullable
+- [x] Web: SignUpPage — removed role toggle, simplified form (name, email, password)
+- [x] Web: OnboardingPage — role selection (Peminjam / Pemberi Pinjaman / Wali Amanah)
+- [x] Web: BorrowerOnboardingPage — step wizard (Profile → BI Check → Done)
+- [x] Web: TrusteeOnboardingPage — trustee profile setup (name, type, institution)
+- [x] Web: BorrowerDashboard — onboarding checklist banner with progress tracking
+- [x] Web: BorrowerPengaturanPage — settings with change password, role change request, logout
+- [x] Web: BorrowerLayout — updated to 3 tabs (Pinjaman, Profil, Pengaturan)
+- [x] Web: App.tsx — updated routing with onboarding redirects
+- [x] Web: Auth store — added setRole, fetchProfile, hasNoRole
+
 ## Next Steps
-- Trustee collateral verification flow (trustee_requests table exists but unused)
-- Role change request UI (endpoint exists, no web UI)
-- Contract PDF generation (puppeteer/pdfkit)
-- Payment proof upload (multipart, image storage)
-- Email: payment reminders (scheduled), trustee invitation
-- Password reset/forgot password flow
+- Contract PDF generation polish
 - Responsive polish & accessibility
+- Email notification expansion
+- Admin dashboard expansion

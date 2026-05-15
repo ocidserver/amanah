@@ -12,6 +12,9 @@ dist/
 # Docker
 postgres-data/
 
+# uploads
+packages/server/uploads/
+
 # Vite
 *.local
 

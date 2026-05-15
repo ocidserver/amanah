@@ -90,7 +90,10 @@ export async function sendPaymentConfirmedEmail(email: string, periodLabel: stri
   )
 }
 
-export async function sendTrusteeInvitationEmail(email: string, lenderName: string): Promise<void> {
+export async function sendTrusteeInvitationEmail(email: string, lenderName: string, loanId?: string): Promise<void> {
+  const trusteeUrl = loanId
+    ? `${APP_URL}/trustee`
+    : `${APP_URL}/trustee`
   await sendEmail(
     email,
     "Undangan Menjadi Wali Amanah",
@@ -98,7 +101,11 @@ export async function sendTrusteeInvitationEmail(email: string, lenderName: stri
     <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto;">
       <h2 style="color: #1B4332;">Undangan Wali Amanah</h2>
       <p>${lenderName} mengundang Anda untuk menjadi wali amanah di Amanah.</p>
-      <p style="color: #64748B;">Silakan buka aplikasi untuk menerima atau menolak undangan ini.</p>
+      <p style="color: #64748B; margin: 16px 0;">Silakan klik tombol di bawah untuk melihat dan mengelola permintaan wali amanah Anda.</p>
+      <a href="${trusteeUrl}" style="display: inline-block; background-color: #1B4332; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: 600;">
+        Buka Dashboard Wali
+      </a>
+      <p style="color: #94a3b8; font-size: 12px; margin-top: 16px;">Jika Anda tidak merasa diundang, abaikan email ini.</p>
     </div>
     `
   )
@@ -137,6 +144,108 @@ export async function sendLoanInvitationEmail(email: string, borrowerAlias: stri
         Lihat Undangan
       </a>
       <p style="color: #94a3b8; font-size: 12px; margin-top: 16px;">Jika Anda belum punya akun, Anda akan diarahkan untuk mendaftar sebagai peminjam.</p>
+    </div>
+    `
+  )
+}
+
+export async function sendBorrowerReminderEmail(email: string, borrowerAlias: string, amount: number, periodLabel: string, dueDate: string, daysLeft: number): Promise<void> {
+  const formattedAmount = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount)
+  const title = daysLeft === 0 ? "Jatuh Tempo Hari Ini!" : `Pengingat: ${daysLeft} Hari Lagi`
+  await sendEmail(
+    email,
+    title,
+    `
+    <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto;">
+      <h2 style="color: #1B4332;">${title}</h2>
+      <p>Halo ${borrowerAlias},</p>
+      ${daysLeft === 0
+        ? `<p style="color: #dc2626; font-weight: 600;">Cicilan <strong>${periodLabel}</strong> jatuh tempo hari ini.</p>`
+        : `<p>Cicilan <strong>${periodLabel}</strong> akan jatuh tempo dalam <strong>${daysLeft} hari</strong>.</p>`
+      }
+      <p>Nominal: <strong>${formattedAmount}</strong></p>
+      <p>Jatuh tempo: <strong>${dueDate}</strong></p>
+      <p style="color: #64748B;">Segera lakukan pembayaran dan upload bukti transfer di aplikasi Amanah.</p>
+    </div>
+    `
+  )
+}
+
+export async function sendPasswordResetEmail(email: string, displayName: string | null, resetUrl: string): Promise<void> {
+  await sendEmail(
+    email,
+    "Reset Password Amanah",
+    `
+    <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto;">
+      <h2 style="color: #1B4332;">Reset Password</h2>
+      <p>Halo ${displayName || "Sahabat"},</p>
+      <p>Anda meminta untuk mereset password akun Amanah Anda.</p>
+      <p style="color: #64748B; margin: 16px 0;">Link ini berlaku selama 1 jam.</p>
+      <a href="${resetUrl}" style="display: inline-block; background-color: #1B4332; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: 600;">
+        Reset Password
+      </a>
+      <p style="color: #94a3b8; font-size: 12px; margin-top: 16px;">Jika Anda tidak meminta reset password, abaikan email ini.</p>
+    </div>
+    `
+  )
+}
+
+export async function sendPaymentRejectedEmail(email: string, periodLabel: string, amount: number): Promise<void> {
+  const formattedAmount = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount)
+  await sendEmail(
+    email,
+    "Bukti Transfer Ditolak",
+    `
+    <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto;">
+      <h2 style="color: #dc2626;">Bukti Transfer Ditolak</h2>
+      <p>Bukti transfer untuk cicilan <strong>${periodLabel}</strong> ditolak oleh pemberi pinjaman.</p>
+      <p>Nominal: <strong>${formattedAmount}</strong></p>
+      <p style="color: #64748B;">Silakan upload ulang bukti transfer yang valid di aplikasi Amanah.</p>
+    </div>
+    `
+  )
+}
+
+export async function sendLoanApprovedEmail(email: string, borrowerAlias: string, amount: number, loanId: string): Promise<void> {
+  const formattedAmount = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount)
+  await sendEmail(
+    email,
+    "Pinjaman Disetujui!",
+    `
+    <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto;">
+      <h2 style="color: #1B4332;">Pinjaman Disetujui</h2>
+      <p>Pinjaman untuk <strong>${borrowerAlias}</strong> telah disetujui.</p>
+      <p>Nominal: <strong>${formattedAmount}</strong></p>
+      <p style="color: #64748B;">Silakan cek aplikasi untuk detail selanjutnya.</p>
+    </div>
+    `
+  )
+}
+
+export async function sendLoanRejectedEmail(email: string, borrowerAlias: string, reason: string | null): Promise<void> {
+  await sendEmail(
+    email,
+    "Pinjaman Ditolak",
+    `
+    <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto;">
+      <h2 style="color: #dc2626;">Pinjaman Ditolak</h2>
+      <p>Pinjaman untuk <strong>${borrowerAlias}</strong> tidak dapat disetujui.</p>
+      ${reason ? `<p>Alasan: <strong>${reason}</strong></p>` : ""}
+      <p style="color: #64748B;">Anda bisa mengajukan pinjaman baru setelah memperbaiki persyaratan.</p>
+    </div>
+    `
+  )
+}
+
+export async function sendCollateralVerifiedEmail(email: string, borrowerAlias: string, trusteeName: string): Promise<void> {
+  await sendEmail(
+    email,
+    "Jaminan Diverifikasi",
+    `
+    <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto;">
+      <h2 style="color: #1B4332;">Jaminan Diverifikasi</h2>
+      <p>Wali amanah <strong>${trusteeName}</strong> telah memverifikasi jaminan untuk pinjaman <strong>${borrowerAlias}</strong>.</p>
+      <p style="color: #64748B;">Pinjaman akan segera diproses setelah verifikasi selesai.</p>
     </div>
     `
   )

@@ -4,7 +4,7 @@ import { api } from "../lib/api"
 import { formatCurrency, formatDate } from "../lib/utils"
 import { LOAN_PURPOSE, BORROWER_TIER_LABELS } from "@amanah/shared"
 import type { ILoan, BorrowerTier } from "@amanah/shared"
-import { IconWallet, IconCheck, IconChevronRight, IconClock, IconPlus } from "../components/Icons"
+import { IconWallet, IconCheck, IconChevronRight, IconClock, IconPlus, IconShield, IconUser } from "../components/Icons"
 import { useAuth } from "../hooks/use-auth"
 
 export default function BorrowerDashboard() {
@@ -13,6 +13,12 @@ export default function BorrowerDashboard() {
   const { data, isLoading } = useQuery({
     queryKey: ["borrower-loans"],
     queryFn: () => api.get<{ loans: ILoan[] }>("/borrower/loans"),
+  })
+
+  const { data: biData } = useQuery({
+    queryKey: ["borrower-bi-status"],
+    queryFn: () => api.get<{ status: string; canApply: boolean }>("/borrower-app/can-apply"),
+    enabled: !!user?.profileCompleted,
   })
 
   const loans = data?.loans ?? []
@@ -25,6 +31,23 @@ export default function BorrowerDashboard() {
 
   const tierLabel = user?.borrowerTier ? BORROWER_TIER_LABELS[user.borrowerTier as BorrowerTier] : "Peminjam Baru"
 
+  const isProfileComplete = user?.profileCompleted
+  const biStatus = biData?.status
+  const biApproved = biData?.canApply
+
+  // Determine onboarding step
+  const onboardingStep = !isProfileComplete
+    ? "profile"
+    : biStatus === "approved"
+    ? "done"
+    : biStatus === "rejected"
+    ? "bi-rejected"
+    : biStatus === "pending"
+    ? "bi-pending"
+    : "bi-check"
+
+  const showOnboardingBanner = onboardingStep !== "done"
+
   return (
     <div className="px-4 pt-4 pb-4">
       <div className="mb-5">
@@ -34,6 +57,77 @@ export default function BorrowerDashboard() {
           {tierLabel}
         </span>
       </div>
+
+      {/* Onboarding Banner */}
+      {showOnboardingBanner && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-6">
+          <h3 className="font-semibold text-gray-900 mb-3">Lengkapi Profil Anda</h3>
+          <div className="space-y-3">
+            {/* Step 1: Profile */}
+            <div className="flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                isProfileComplete ? "bg-green-100" : "bg-[var(--color-primary)]"
+              }`}>
+                {isProfileComplete ? (
+                  <IconCheck className="w-4 h-4 text-green-600" />
+                ) : (
+                  <IconUser className="w-4 h-4 text-white" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-medium ${isProfileComplete ? "text-green-700" : "text-gray-900"}`}>
+                  {isProfileComplete ? "Profil Lengkap" : "Lengkapi Data Diri"}
+                </p>
+                {!isProfileComplete && (
+                  <p className="text-xs text-gray-400">Nama, NIK, alamat, pekerjaan</p>
+                )}
+              </div>
+              {!isProfileComplete && (
+                <Link to="/borrower/onboarding" className="text-xs text-[var(--color-primary)] font-medium">
+                  Lengkapi →
+                </Link>
+              )}
+            </div>
+
+            {/* Step 2: BI Check */}
+            {isProfileComplete && (
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                  biStatus === "approved" ? "bg-green-100" : biStatus === "rejected" ? "bg-red-100" : biStatus === "pending" ? "bg-yellow-100" : "bg-gray-100"
+                }`}>
+                  {biStatus === "approved" ? (
+                    <IconCheck className="w-4 h-4 text-green-600" />
+                  ) : biStatus === "rejected" ? (
+                    <IconClock className="w-4 h-4 text-red-600" />
+                  ) : biStatus === "pending" ? (
+                    <IconClock className="w-4 h-4 text-yellow-600" />
+                  ) : (
+                    <IconShield className="w-4 h-4 text-gray-400" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium ${
+                    biStatus === "approved" ? "text-green-700" : biStatus === "rejected" ? "text-red-700" : "text-gray-900"
+                  }`}>
+                    {biStatus === "approved" ? "BI Checking Lolos" : biStatus === "rejected" ? "BI Checking Tidak Lolos" : biStatus === "pending" ? "BI Checking Proses" : "Pengecekan BI"}
+                  </p>
+                  {biStatus === "rejected" && (
+                    <p className="text-xs text-red-500">Hubungi admin untuk info lebih lanjut</p>
+                  )}
+                  {biStatus === "pending" && (
+                    <p className="text-xs text-yellow-600">Sedang dalam proses...</p>
+                  )}
+                </div>
+                {biStatus !== "approved" && biStatus !== "pending" && (
+                  <Link to="/borrower/onboarding" className="text-xs text-[var(--color-primary)] font-medium">
+                    {biStatus === "rejected" ? "Coba Lagi →" : "Cek BI →"}
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="grid grid-cols-2 gap-3 mb-6">
@@ -62,11 +156,11 @@ export default function BorrowerDashboard() {
       )}
 
       <Link
-        to="/borrower/pengajuan"
+        to={biApproved ? "/borrower/pengajuan" : "/borrower/onboarding"}
         className="flex items-center justify-center gap-2 w-full bg-[var(--color-primary)] text-white py-3 rounded-xl font-semibold mb-6 active:scale-[0.99] transition-transform"
       >
         <IconPlus className="w-5 h-5" />
-        Ajukan Pinjaman
+        {biApproved ? "Ajukan Pinjaman" : "Lengkapi Profil Dulu"}
       </Link>
 
       {(pendingLoans.length > 0 || approvedLoans.length > 0) && (

@@ -14,33 +14,55 @@ import PinjamanBaruSuccessPage from "./pages/PinjamanBaruSuccessPage"
 import WaliAmanahPage from "./pages/WaliAmanahPage"
 import UndangWaliPage from "./pages/UndangWaliPage"
 import ProfilPage from "./pages/ProfilPage"
+import PengaturanPage from "./pages/PengaturanPage"
 import LoginPage from "./pages/LoginPage"
 import SignUpPage from "./pages/SignUpPage"
+import ForgotPasswordPage from "./pages/ForgotPasswordPage"
+import ResetPasswordPage from "./pages/ResetPasswordPage"
+import OnboardingPage from "./pages/OnboardingPage"
+import BorrowerOnboardingPage from "./pages/BorrowerOnboardingPage"
+import TrusteeOnboardingPage from "./pages/TrusteeOnboardingPage"
 import BorrowerDashboard from "./pages/BorrowerDashboard"
 import BorrowerLoanDetailPage from "./pages/BorrowerLoanDetailPage"
 import BorrowerProfilPage from "./pages/BorrowerProfilPage"
+import BorrowerPengaturanPage from "./pages/BorrowerPengaturanPage"
 import BorrowerApplyPage from "./pages/BorrowerApplyPage"
 import LenderApplicationsPage from "./pages/LenderApplicationsPage"
 import ApplicationDetailPage from "./pages/ApplicationDetailPage"
 import InvitationAcceptPage from "./pages/InvitationAcceptPage"
+import TrusteeDashboard from "./pages/TrusteeDashboard"
+import TrusteeLayout from "./components/TrusteeLayout"
+import TrusteeProfilPage from "./pages/TrusteeProfilPage"
+import AdminDashboard from "./pages/AdminDashboard"
+import AdminLayout from "./components/AdminLayout"
+import AdminUsersPage from "./pages/AdminUsersPage"
+import AdminLoansPage from "./pages/AdminLoansPage"
+import AdminTrusteePage from "./pages/AdminTrusteePage"
+import AdminRoleChangesPage from "./pages/AdminRoleChangesPage"
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const { hasNoRole } = useAuth()
   if (!isAuthenticated) return <Navigate to="/login" replace />
+  if (hasNoRole) return <Navigate to="/onboarding" replace />
   return <>{children}</>
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isBorrower } = useAuth()
+  const { isAuthenticated, hasNoRole } = useAuth()
   if (isAuthenticated) {
-    return <Navigate to={isBorrower ? "/borrower" : "/dashboard"} replace />
+    if (hasNoRole) return <Navigate to="/onboarding" replace />
+    return <Navigate to="/dashboard" replace />
   }
   return <>{children}</>
 }
 
 function RoleRedirect() {
-  const { isBorrower } = useAuth()
-  return <Navigate to={isBorrower ? "/borrower" : "/dashboard"} replace />
+  const { hasNoRole, isBorrower, isTrustee } = useAuth()
+  if (hasNoRole) return <Navigate to="/onboarding" replace />
+  if (isBorrower) return <Navigate to="/borrower" replace />
+  if (isTrustee) return <Navigate to="/trustee" replace />
+  return <Navigate to="/dashboard" replace />
 }
 
 export default function App() {
@@ -65,7 +87,10 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/signup" element={<PublicRoute><SignUpPage /></PublicRoute>} />
+        <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+        <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
         <Route path="/invite/:token" element={<InvitationAcceptPage />} />
+        <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
 
         <Route
           element={
@@ -93,10 +118,37 @@ export default function App() {
             </ProtectedRoute>
           }
         >
+          <Route path="/borrower/onboarding" element={<BorrowerOnboardingPage />} />
           <Route path="/borrower" element={<BorrowerDashboard />} />
           <Route path="/borrower/pinjaman/:id" element={<BorrowerLoanDetailPage />} />
           <Route path="/borrower/pengajuan" element={<BorrowerApplyPage />} />
           <Route path="/borrower/profil" element={<BorrowerProfilPage />} />
+        </Route>
+
+        <Route
+          element={
+            <ProtectedRoute>
+              <TrusteeLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/trustee/onboarding" element={<TrusteeOnboardingPage />} />
+          <Route path="/trustee" element={<TrusteeDashboard />} />
+          <Route path="/trustee/profil" element={<TrusteeProfilPage />} />
+        </Route>
+
+        <Route
+          element={
+            <ProtectedRoute>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/loans" element={<AdminLoansPage />} />
+          <Route path="/admin/trustees" element={<AdminTrusteePage />} />
+          <Route path="/admin/role-changes" element={<AdminRoleChangesPage />} />
         </Route>
 
         <Route path="*" element={<RoleRedirect />} />

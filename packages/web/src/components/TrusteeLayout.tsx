@@ -1,37 +1,37 @@
 import { Outlet, NavLink, Navigate } from "react-router-dom"
 import { useAuth } from "../hooks/use-auth"
-import { IconWallet, IconUser } from "./Icons"
+import { IconShield, IconUser } from "./Icons"
 
 const navItems = [
-  { to: "/borrower", label: "Pinjaman", Icon: IconWallet },
-  { to: "/borrower/profil", label: "Profil", Icon: IconUser },
+  { to: "/trustee", label: "Dashboard", Icon: IconShield },
+  { to: "/trustee/profil", label: "Profil", Icon: IconUser },
 ]
 
-export default function BorrowerLayout() {
-  const { isLender } = useAuth()
+export default function TrusteeLayout() {
+  const { isBorrower } = useAuth()
 
-  if (isLender) {
-    return <Navigate to="/dashboard" replace />
+  if (isBorrower) {
+    return <Navigate to="/borrower" replace />
   }
 
   return (
     <div className="min-h-dvh bg-gray-50 flex flex-col">
       <header className="bg-[var(--color-primary)] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 safe-top">
         <h1 className="text-lg font-bold tracking-wide">Amanah</h1>
-        <span className="text-xs opacity-70">Peminjam</span>
+        <span className="text-xs opacity-70">Wali Amanah</span>
       </header>
 
       <main className="flex-1 pb-20">
         <Outlet />
       </main>
 
-      <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 z-40 safe-bottom" role="navigation" aria-label="Navigasi peminjam">
+      <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 z-40 safe-bottom" role="navigation" aria-label="Navigasi wali amanah">
         <div className="max-w-lg mx-auto grid grid-cols-2">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === "/borrower"}
+              end={item.to === "/trustee"}
               aria-label={item.label}
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center py-2 text-[10px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 ${

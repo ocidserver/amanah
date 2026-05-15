@@ -1,14 +1,9 @@
 import { useState } from "react"
-import { useNavigate, Link, useSearchParams } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { useAuth } from "../hooks/use-auth"
-import type { UserRole } from "@amanah/shared"
 
 export default function SignUpPage() {
-  const [searchParams] = useSearchParams()
-  const prefillRole = (searchParams.get("role") as UserRole) || "lender"
-  const prefillEmail = searchParams.get("email") || ""
-  const [role, setRole] = useState<UserRole>(prefillRole === "borrower" ? "borrower" : "lender")
-  const [email, setEmail] = useState(prefillEmail)
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [displayName, setDisplayName] = useState("")
   const [error, setError] = useState("")
@@ -21,16 +16,14 @@ export default function SignUpPage() {
     setError("")
     setLoading(true)
     try {
-      await register(email.trim().toLowerCase(), password, displayName.trim() || undefined, role)
-      navigate(role === "borrower" ? "/borrower" : "/dashboard", { replace: true })
+      await register(email.trim().toLowerCase(), password, displayName.trim() || undefined)
+      navigate("/onboarding", { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registrasi gagal")
     } finally {
       setLoading(false)
     }
   }
-
-  const isBorrower = role === "borrower"
 
   return (
     <div className="min-h-dvh flex">
@@ -40,13 +33,9 @@ export default function SignUpPage() {
           <div className="absolute bottom-32 right-16 w-96 h-96 rounded-full border-2 border-white" />
         </div>
         <div className="relative text-center max-w-md">
-          <h2 className="text-4xl font-bold mb-4">
-            {isBorrower ? "Mulai Perjalanan\nKebaikan Anda" : "Daftarkan Diri\nSebagai Pemberi Pinjaman"}
-          </h2>
+          <h2 className="text-4xl font-bold mb-4">Bergabung dengan<br />Komunitas Amanah</h2>
           <p className="text-white/70 text-lg leading-relaxed">
-            {isBorrower
-              ? "Buat akun peminjam dan dapatkan pinjaman tanpa bunga dari pemberi terpercaya."
-              : "Catat pinjaman tanpa bunga, jaga privasi peminjam, dan kelola cicilan dengan mudah."}
+            Pilih peran Anda setelah mendaftar: sebagai peminjam, pemberi pinjaman, atau wali amanah.
           </p>
         </div>
       </div>
@@ -60,28 +49,7 @@ export default function SignUpPage() {
               </div>
             </div>
             <h1 className="text-3xl font-bold text-gray-900">Buat Akun</h1>
-            <p className="text-gray-500 mt-1 text-sm">Pilih peran dan mulai</p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 mb-6 bg-gray-100 rounded-xl p-1">
-            <button
-              type="button"
-              onClick={() => setRole("lender")}
-              className={`py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                !isBorrower ? "bg-white shadow text-[var(--color-primary)]" : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Pemberi Pinjaman
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole("borrower")}
-              className={`py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isBorrower ? "bg-white shadow text-[var(--color-primary)]" : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Peminjam
-            </button>
+            <p className="text-gray-500 mt-1 text-sm">Mulai perjalanan kebaikan Anda</p>
           </div>
 
           {error && (
@@ -90,10 +58,10 @@ export default function SignUpPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nama <span className="text-gray-400 font-normal">(opsional)</span></label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap <span className="text-gray-400 font-normal">(opsional)</span></label>
               <input
                 type="text"
-                placeholder={isBorrower ? "Nama lengkap" : "Nama tampilan"}
+                placeholder="Nama sesuai KTP"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
@@ -127,7 +95,7 @@ export default function SignUpPage() {
               disabled={loading}
               className="w-full bg-[var(--color-primary)] text-white rounded-xl py-3 font-semibold text-base disabled:opacity-50 active:scale-[0.98] transition-transform"
             >
-              {loading ? "Mendaftar..." : `Daftar sebagai ${isBorrower ? "Peminjam" : "Pemberi Pinjaman"}`}
+              {loading ? "Mendaftar..." : "Daftar"}
             </button>
           </form>
 

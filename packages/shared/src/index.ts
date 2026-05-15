@@ -36,7 +36,7 @@ export const LENDER_TIERS: Record<LenderTier, TierLabel> = {
 export interface IUser {
   id: string
   email: string
-  role: UserRole
+  role: UserRole | null
   displayName: string | null
   phone: string | null
   idNumber: string | null
@@ -44,6 +44,7 @@ export interface IUser {
   occupation: string | null
   ktpDocumentUrl: string | null
   profileCompleted: boolean
+  isVerified: boolean
   borrowerTier: BorrowerTier | null
   lenderTier: LenderTier | null
   rating: string | null
@@ -64,6 +65,7 @@ export interface ILoan {
   installmentType: InstallmentType
   purpose: LoanPurpose
   collateralType: CollateralType
+  collateralDescription: string | null
   collateralStatus: CollateralStatus
   notesEncrypted: string | null
   applicationNote: string | null

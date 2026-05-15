@@ -1,19 +1,25 @@
 import { useParams, Link } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { api } from "../lib/api"
 import { formatCurrency, formatDate } from "../lib/utils"
-import { IconChevronLeft, IconClock, IconCheck } from "../components/Icons"
-import { LOAN_PURPOSE, LOAN_STATUS, INSTALLMENT_STATUS } from "@amanah/shared"
+import { IconChevronLeft, IconClock, IconCheck, IconUpload } from "../components/Icons"
+import { LOAN_PURPOSE, LOAN_STATUS } from "@amanah/shared"
 import type { ILoan, IInstallment, ICompletionMessage } from "@amanah/shared"
 
 export default function BorrowerLoanDetailPage() {
   const { id } = useParams<{ id: string }>()
   const queryClient = useQueryClient()
-  const [confirmingId, setConfirmingId] = useState<string | null>(null)
   const [doaMessage, setDoaMessage] = useState("")
   const [doaSubmitting, setDoaSubmitting] = useState(false)
   const [doaError, setDoaError] = useState("")
+  
+  // Upload state
+  const [uploadingId, setUploadingId] = useState<string | null>(null)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [selectedInstallmentId, setSelectedInstallmentId] = useState<string | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ["borrower-loan", id],
@@ -26,19 +32,71 @@ export default function BorrowerLoanDetailPage() {
     }>(`/borrower/loans/${id}`),
   })
 
-  const confirmMutation = useMutation({
-    mutationFn: (installmentId: string) =>
-      api.patch<{ installment: IInstallment }>(`/borrower/installments/${installmentId}/confirm`, {
-        status: "paid",
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["borrower-loan", id] })
-      setConfirmingId(null)
+  const uploadProofMutation = useMutation({
+    mutationFn: async ({ installmentId, file }: { installmentId: string; file: File }) => {
+      const formData = new FormData()
+      formData.append("image", file)
+      
+      const token = localStorage.getItem("accessToken")
+      const response = await fetch(`/api/payment-proofs/installments/${installmentId}/upload`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      })
+      
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}))
+        throw new Error(errData.error || "Gagal mengupload bukti")
+      }
+      
+      return response.json()
     },
-    onError: () => {
-      setConfirmingId(null)
+    onMutate: () => {
+      setUploadProgress(0)
+      setUploadError(null)
+      // Simulate progress since fetch doesn't support upload progress events easily
+      const interval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(interval)
+            return 90
+          }
+          return prev + 10
+        })
+      }, 200)
+      return { interval }
+    },
+    onSuccess: (_, { installmentId }) => {
+      setUploadProgress(100)
+      setTimeout(() => {
+        setUploadingId(null)
+        setSelectedInstallmentId(null)
+        queryClient.invalidateQueries({ queryKey: ["borrower-loan", id] })
+      }, 500)
+    },
+    onError: (err) => {
+      setUploadError(err instanceof Error ? err.message : "Terjadi kesalahan")
+      setUploadingId(null)
+      setUploadProgress(0)
     },
   })
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && selectedInstallmentId) {
+      setUploadingId(selectedInstallmentId)
+      uploadProofMutation.mutate({ installmentId: selectedInstallmentId, file })
+    }
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  const openFilePicker = (installmentId: string) => {
+    setSelectedInstallmentId(installmentId)
+    fileInputRef.current?.click()
+  }
 
   const handleDoaLunas = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -139,19 +197,25 @@ export default function BorrowerLoanDetailPage() {
                 <p className="font-medium text-gray-900 text-sm">{inst.periodLabel}</p>
                 <p className="text-xs text-gray-400">{formatDate(inst.dueDate)}</p>
               </div>
-              <div className="text-right shrink-0">
+              <div className="text-right shrink-0 min-w-[100px]">
                 <p className="font-semibold text-gray-900 text-sm">{formatCurrency(inst.amount)}</p>
                 {inst.status === "paid" ? (
                   <p className="text-xs text-green-600">Lunas</p>
-                ) : inst.status === "processing" ? (
-                  <p className="text-xs text-yellow-600">Diproses</p>
+                ) : uploadingId === inst.id ? (
+                  <div className="mt-1">
+                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                      <div className="bg-[var(--color-primary)] h-1.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+                    </div>
+                    <p className="text-[10px] text-gray-500 mt-1">Mengupload...</p>
+                  </div>
+                ) : uploadError && uploadingId === inst.id ? (
+                   <p className="text-xs text-red-500 mt-1">{uploadError}</p>
                 ) : (
                   <button
-                    onClick={() => { setConfirmingId(inst.id); confirmMutation.mutate(inst.id) }}
-                    disabled={confirmingId === inst.id}
-                    className="text-xs text-[var(--color-primary)] font-medium hover:underline disabled:opacity-50"
+                    onClick={() => openFilePicker(inst.id)}
+                    className="text-xs text-[var(--color-primary)] font-medium hover:underline flex items-center justify-center gap-1 w-full mt-1"
                   >
-                    {confirmingId === inst.id ? "Menyimpan..." : "Sudah Bayar"}
+                    <IconUpload className="w-3 h-3" /> Upload Bukti
                   </button>
                 )}
               </div>
@@ -159,6 +223,14 @@ export default function BorrowerLoanDetailPage() {
           ))}
         </div>
       )}
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept="image/jpeg,image/png,image/webp"
+        onChange={handleFileChange}
+      />
 
       {loan.doaLunasEnabled && (
         <div className="mt-6">

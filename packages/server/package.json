@@ -14,11 +14,14 @@
   "dependencies": {
     "@hono/node-server": "^1.14.0",
     "@hono/zod-validator": "^0.5.0",
+    "@types/pdfkit": "^0.17.6",
     "bcryptjs": "^2.4.3",
     "drizzle-orm": "^0.44.0",
     "hono": "^4.7.0",
     "jsonwebtoken": "^9.0.2",
     "nanoid": "^5.1.11",
+    "node-cron": "^4.2.1",
+    "pdfkit": "^0.18.0",
     "postgres": "^3.4.0",
     "resend": "^4.5.0",
     "zod": "^3.25.0"

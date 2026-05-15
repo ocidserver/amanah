@@ -1,8 +1,8 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useState, useRef } from "react"
 import { useAuth } from "../hooks/use-auth"
+import { useNavigate } from "react-router-dom"
 import { api } from "../lib/api"
-import { IconLogOut, IconChevronRight, IconShield, IconMail, IconUser, IconArrowRightLeft } from "../components/Icons"
+import { IconLogOut, IconChevronRight, IconEdit, IconCheck, IconShield, IconMail, IconArrowRightLeft, IconUpload } from "../components/Icons"
 
 function SettingItem({ icon, label, subtitle, onClick, danger }: {
   icon: React.ReactNode
@@ -28,17 +28,21 @@ function SettingItem({ icon, label, subtitle, onClick, danger }: {
   )
 }
 
-export default function BorrowerPengaturanPage() {
-  const { signOut, user } = useAuth()
+export default function TrusteeProfilPage() {
+  const { signOut, user, updateProfile, uploadKtp } = useAuth()
   const navigate = useNavigate()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [editing, setEditing] = useState(false)
   const [showChangePassword, setShowChangePassword] = useState(false)
+  const [showRoleChange, setShowRoleChange] = useState(false)
+  const [name, setName] = useState(user?.displayName || "")
+  const [saving, setSaving] = useState(false)
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [pwLoading, setPwLoading] = useState(false)
   const [pwError, setPwError] = useState("")
   const [pwSuccess, setPwSuccess] = useState(false)
-  const [showRoleChange, setShowRoleChange] = useState(false)
   const [roleChangeLoading, setRoleChangeLoading] = useState(false)
   const [roleChangeError, setRoleChangeError] = useState("")
   const [roleChangeSuccess, setRoleChangeSuccess] = useState(false)
@@ -46,6 +50,25 @@ export default function BorrowerPengaturanPage() {
   const handleSignOut = async () => {
     await signOut()
     navigate("/login", { replace: true })
+  }
+
+  const handleSaveName = async () => {
+    if (!name.trim()) return
+    setSaving(true)
+    try {
+      await updateProfile(name.trim())
+      setEditing(false)
+    } catch {} finally {
+      setSaving(false)
+    }
+  }
+
+  const handleKtpUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      await uploadKtp(file)
+    } catch {}
   }
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -78,6 +101,8 @@ export default function BorrowerPengaturanPage() {
     }
   }
 
+  const initial = (user?.displayName?.[0] || user?.email?.[0] || "A").toUpperCase()
+
   if (showChangePassword) {
     return (
       <div className="px-4 pt-4 pb-6">
@@ -88,7 +113,7 @@ export default function BorrowerPengaturanPage() {
         {pwSuccess ? (
           <div className="text-center py-8">
             <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-green-50 flex items-center justify-center">
-              <IconShield className="w-6 h-6 text-green-600" />
+              <IconCheck className="w-6 h-6 text-green-600" />
             </div>
             <p className="text-gray-900 font-semibold">Password Berhasil Diubah</p>
           </div>
@@ -134,7 +159,7 @@ export default function BorrowerPengaturanPage() {
         ) : (
           <div className="space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <p className="text-sm font-medium text-blue-900">Ubah dari Peminjam ke Pemberi Pinjaman?</p>
+              <p className="text-sm font-medium text-blue-900">Ubah dari Wali Amanah ke Pemberi Pinjaman?</p>
               <p className="text-xs text-blue-700 mt-1">
                 Permintaan ini akan ditinjau oleh admin. Proses bisa memakan waktu 1-2 hari kerja.
               </p>
@@ -157,8 +182,79 @@ export default function BorrowerPengaturanPage() {
 
   return (
     <div className="px-4 pt-4 pb-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">Pengaturan</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-4">Profil</h2>
 
+      {/* Profile Card */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-4">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center text-2xl font-bold shrink-0">
+            {initial}
+          </div>
+          <div className="min-w-0 flex-1">
+            {editing ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="flex-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSaveName() }}
+                />
+                <button onClick={handleSaveName} disabled={saving} className="text-sm text-[var(--color-primary)] font-medium disabled:opacity-50">
+                  {saving ? "..." : "Simpan"}
+                </button>
+                <button onClick={() => { setEditing(false); setName(user?.displayName || "") }} className="text-sm text-gray-400">
+                  Batal
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-gray-900 text-lg truncate">{user?.displayName || "Tanpa Nama"}</p>
+                <button onClick={() => { setEditing(true); setName(user?.displayName || "") }} className="text-gray-400 hover:text-[var(--color-primary)]">
+                  <IconEdit className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            <p className="text-sm text-gray-500 truncate">{user?.email}</p>
+            <div className="flex items-center gap-2 mt-1">
+              {user?.isVerified ? (
+                <span className="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
+                  <IconCheck className="w-3 h-3" /> Terverifikasi BMT
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-medium">
+                  <IconShield className="w-3 h-3" /> Menunggu Verifikasi
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* KTP Document */}
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4">
+        <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Dokumen</p>
+        </div>
+        <input type="file" ref={fileInputRef} accept="image/jpeg,image/png,image/webp" onChange={handleKtpUpload} className="hidden" />
+        {user?.ktpDocumentUrl ? (
+          <div className="p-4">
+            <img src={user.ktpDocumentUrl} alt="KTP" className="w-full h-40 object-cover rounded-xl border border-gray-200 mb-2" />
+            <button onClick={() => fileInputRef.current?.click()} className="text-sm text-[var(--color-primary)] font-medium">
+              Ganti Foto KTP
+            </button>
+          </div>
+        ) : (
+          <button onClick={() => fileInputRef.current?.click()} className="w-full px-4 py-6 flex flex-col items-center gap-2 text-[var(--color-primary)] active:bg-gray-50">
+            <IconUpload className="w-6 h-6" />
+            <span className="font-medium text-[15px]">Upload Foto KTP</span>
+            <span className="text-xs text-gray-400">Wajib untuk verifikasi BMT</span>
+          </button>
+        )}
+      </div>
+
+      {/* Account Settings */}
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4">
         <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Akun</p>
@@ -179,7 +275,7 @@ export default function BorrowerPengaturanPage() {
         <SettingItem
           icon={<IconArrowRightLeft className="w-5 h-5" />}
           label="Ubah Peran"
-          subtitle="Peminjam → Pemberi Pinjaman"
+          subtitle="Wali Amanah → Pemberi Pinjaman"
           onClick={() => setShowRoleChange(true)}
         />
       </div>

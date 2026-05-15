@@ -6,12 +6,20 @@ import { db } from "../db"
 import { installments, paymentProofs, loans, users } from "../db/schema"
 import { authMiddleware, AuthEnv } from "../middleware/auth"
 import { checkAndCompleteLoan } from "../lib/loan-helpers"
-import { sendPaymentConfirmedEmail } from "../lib/email"
+import { sendPaymentConfirmedEmail, sendPaymentRejectedEmail } from "../lib/email"
 import { serve } from "@hono/node-server"
+import fs from "fs"
+import path from "path"
 
 const proofRoutes = new Hono<AuthEnv>()
 
 proofRoutes.use("/*", authMiddleware)
+
+// Ensure uploads directory exists
+const UPLOADS_DIR = path.join(process.cwd(), "uploads", "proofs")
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true })
+}
 
 proofRoutes.post("/installments/:id/upload", async (c) => {
   const user = c.get("user")
@@ -27,8 +35,9 @@ proofRoutes.post("/installments/:id/upload", async (c) => {
     return c.json({ error: "Tidak memiliki akses" }, 403)
   }
 
+  // Allow re-upload if previous proof was rejected
   const [existing] = await db.select().from(paymentProofs).where(eq(paymentProofs.installmentId, id)).catch(() => [])
-  if (existing) {
+  if (existing && existing.status !== "rejected") {
     return c.json({ error: "Bukti transfer sudah diupload untuk cicilan ini" }, 409)
   }
 
@@ -48,8 +57,30 @@ proofRoutes.post("/installments/:id/upload", async (c) => {
     return c.json({ error: "Ukuran file maksimal 5MB" }, 400)
   }
 
-  const filename = `proof-${id}-${Date.now()}.${file.name.split(".").pop() || "jpg"}`
+  const ext = (file.name as string).split(".").pop() || "jpg"
+  const filename = `proof-${id}-${Date.now()}.${ext}`
+  const filePath = path.join(UPLOADS_DIR, filename)
   const imageUrl = `/uploads/proofs/${filename}`
+
+  // Read file as ArrayBuffer and write to disk
+  const arrayBuffer = await file.arrayBuffer()
+  const buffer = Buffer.from(arrayBuffer)
+  await fs.promises.writeFile(filePath, buffer)
+
+  // If re-uploading after rejection, delete old file and update record
+  if (existing && existing.status === "rejected") {
+    // Delete old file if exists
+    const oldPath = path.join(process.cwd(), existing.imageUrl.replace(/^\//, ""))
+    if (fs.existsSync(oldPath)) {
+      await fs.promises.unlink(oldPath).catch(() => {})
+    }
+    const [updatedProof] = await db
+      .update(paymentProofs)
+      .set({ imageUrl, status: "pending", verifiedBy: null, verifiedAt: null })
+      .where(eq(paymentProofs.id, existing.id))
+      .returning()
+    return c.json({ proof: updatedProof }, 201)
+  }
 
   const [proof] = await db
     .insert(paymentProofs)
@@ -132,6 +163,15 @@ proofRoutes.patch("/:id/verify", zValidator("json", z.object({
         if (borrowerUser?.email) {
           sendPaymentConfirmedEmail(borrowerUser.email, inst.periodLabel, inst.amount).catch(() => {})
         }
+      }
+    }
+  } else if (status === "rejected") {
+    // Notify borrower that proof was rejected
+    const [instLoan] = await db.select().from(loans).where(eq(loans.id, inst.loanId))
+    if (instLoan?.borrowerId) {
+      const [borrowerUser] = await db.select({ email: users.email, displayName: users.displayName }).from(users).where(eq(users.id, instLoan.borrowerId))
+      if (borrowerUser?.email) {
+        sendPaymentRejectedEmail(borrowerUser.email, inst.periodLabel, inst.amount).catch(() => {})
       }
     }
   }
