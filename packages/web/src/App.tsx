@@ -33,12 +33,24 @@ import InvitationAcceptPage from "./pages/InvitationAcceptPage"
 import TrusteeDashboard from "./pages/TrusteeDashboard"
 import TrusteeLayout from "./components/TrusteeLayout"
 import TrusteeProfilPage from "./pages/TrusteeProfilPage"
+import TrusteePengaturanPage from "./pages/TrusteePengaturanPage"
 import AdminDashboard from "./pages/AdminDashboard"
 import AdminLayout from "./components/AdminLayout"
 import AdminUsersPage from "./pages/AdminUsersPage"
 import AdminLoansPage from "./pages/AdminLoansPage"
+import AdminLoanDetailPage from "./pages/AdminLoanDetailPage"
 import AdminTrusteePage from "./pages/AdminTrusteePage"
 import AdminRoleChangesPage from "./pages/AdminRoleChangesPage"
+import AdminUserDetailPage from "./pages/AdminUserDetailPage"
+import AdminDocumentsPage from "./pages/AdminDocumentsPage"
+import PaymentProofsPage from "./pages/PaymentProofsPage"
+import AdminAuditLogsPage from "./pages/AdminAuditLogsPage"
+import NotFoundPage from "./pages/NotFoundPage"
+import TrackPage from "./pages/TrackPage"
+import TrackDetailPage from "./pages/TrackDetailPage"
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage"
+import TermsPage from "./pages/TermsPage"
+import AboutPage from "./pages/AboutPage"
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -49,20 +61,28 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, hasNoRole } = useAuth()
+  const { isAuthenticated, hasNoRole, isAdmin } = useAuth()
   if (isAuthenticated) {
     if (hasNoRole) return <Navigate to="/onboarding" replace />
+    if (isAdmin) return <Navigate to="/admin" replace />
     return <Navigate to="/dashboard" replace />
   }
   return <>{children}</>
 }
 
 function RoleRedirect() {
-  const { hasNoRole, isBorrower, isTrustee } = useAuth()
+  const { hasNoRole, isAdmin, isBorrower, isTrustee } = useAuth()
   if (hasNoRole) return <Navigate to="/onboarding" replace />
+  if (isAdmin) return <Navigate to="/admin" replace />
   if (isBorrower) return <Navigate to="/borrower" replace />
   if (isTrustee) return <Navigate to="/trustee" replace />
   return <Navigate to="/dashboard" replace />
+}
+
+function CatchAllRoute() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  if (isAuthenticated) return <RoleRedirect />
+  return <NotFoundPage />
 }
 
 export default function App() {
@@ -90,6 +110,11 @@ export default function App() {
         <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
         <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
         <Route path="/invite/:token" element={<InvitationAcceptPage />} />
+        <Route path="/track" element={<TrackPage />} />
+        <Route path="/track/:loanCode" element={<TrackDetailPage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
 
         <Route
@@ -104,6 +129,7 @@ export default function App() {
           <Route path="/pinjaman/baru" element={<PinjamanBaruPage />} />
           <Route path="/pinjaman/baru/success" element={<PinjamanBaruSuccessPage />} />
           <Route path="/pinjaman/:id" element={<PinjamanDetailPage />} />
+          <Route path="/bukti-bayar" element={<PaymentProofsPage />} />
           <Route path="/pengajuan" element={<LenderApplicationsPage />} />
           <Route path="/pengajuan/:id" element={<ApplicationDetailPage />} />
           <Route path="/wali-amanah" element={<WaliAmanahPage />} />
@@ -135,6 +161,7 @@ export default function App() {
           <Route path="/trustee/onboarding" element={<TrusteeOnboardingPage />} />
           <Route path="/trustee" element={<TrusteeDashboard />} />
           <Route path="/trustee/profil" element={<TrusteeProfilPage />} />
+          <Route path="/trustee/pengaturan" element={<TrusteePengaturanPage />} />
         </Route>
 
         <Route
@@ -146,12 +173,16 @@ export default function App() {
         >
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/users/:id" element={<AdminUserDetailPage />} />
+          <Route path="/admin/documents" element={<AdminDocumentsPage />} />
+          <Route path="/admin/audit-logs" element={<AdminAuditLogsPage />} />
           <Route path="/admin/loans" element={<AdminLoansPage />} />
+          <Route path="/admin/loans/:id" element={<AdminLoanDetailPage />} />
           <Route path="/admin/trustees" element={<AdminTrusteePage />} />
           <Route path="/admin/role-changes" element={<AdminRoleChangesPage />} />
         </Route>
 
-        <Route path="*" element={<RoleRedirect />} />
+        <Route path="*" element={<CatchAllRoute />} />
       </Routes>
     </ErrorBoundary>
   )

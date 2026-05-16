@@ -40,7 +40,7 @@ export default function SignUpPage() {
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-white">
+      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-white dark:bg-slate-800">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-4 lg:hidden">
@@ -48,44 +48,44 @@ export default function SignUpPage() {
                 <span className="text-white font-bold text-lg">A</span>
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">Buat Akun</h1>
-            <p className="text-gray-500 mt-1 text-sm">Mulai perjalanan kebaikan Anda</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Buat Akun</h1>
+            <p className="text-gray-500 dark:text-slate-400 mt-1 text-sm">Mulai perjalanan kebaikan Anda</p>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm">{error}</div>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 mb-4 text-sm">{error}</div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap <span className="text-gray-400 font-normal">(opsional)</span></label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Nama Lengkap <span className="text-gray-400 dark:text-slate-500 font-normal">(opsional)</span></label>
               <input
                 type="text"
                 placeholder="Nama sesuai KTP"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Email</label>
               <input
                 type="email"
                 placeholder="email@contoh.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Password</label>
               <input
                 type="password"
                 placeholder="Minimal 6 karakter"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                 required
                 minLength={6}
               />
@@ -99,8 +99,8 @@ export default function SignUpPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-gray-100 text-center">
-            <p className="text-sm text-gray-500">
+          <div className="mt-6 pt-6 border-t border-gray-100 dark:border-slate-700 text-center">
+            <p className="text-sm text-gray-500 dark:text-slate-400">
               Sudah punya akun?{" "}
               <Link to="/login" className="text-[var(--color-primary)] font-semibold">
                 Masuk

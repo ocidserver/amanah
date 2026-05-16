@@ -97,7 +97,7 @@ export default function BorrowerOnboardingPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-gray-50">
+    <div className="min-h-dvh bg-gray-50 dark:bg-slate-900">
       {/* Header */}
       <div className="bg-[var(--color-primary)] text-white px-4 py-4">
         <div className="max-w-lg mx-auto">
@@ -110,32 +110,32 @@ export default function BorrowerOnboardingPage() {
       <div className="max-w-lg mx-auto px-4 py-4">
         <div className="flex items-center gap-2">
           <div className={`flex items-center gap-1.5 text-sm font-medium ${
-            step === "profile" ? "text-[var(--color-primary)]" : "text-green-600"
+            step === "profile" ? "text-[var(--color-primary)]" : "text-green-600 dark:text-green-400"
           }`}>
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-              step === "profile" ? "bg-[var(--color-primary)] text-white" : "bg-green-100 text-green-700"
+              step === "profile" ? "bg-[var(--color-primary)] text-white" : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
             }`}>
               {step === "profile" ? "1" : <IconCheck className="w-4 h-4" />}
             </div>
             <span className="hidden sm:inline">Profil</span>
           </div>
-          <div className={`flex-1 h-0.5 ${step === "bi-check" || step === "done" ? "bg-green-400" : "bg-gray-200"}`} />
+          <div className={`flex-1 h-0.5 ${step === "bi-check" || step === "done" ? "bg-green-400" : "bg-gray-200 dark:bg-slate-700"}`} />
           <div className={`flex items-center gap-1.5 text-sm font-medium ${
-            step === "bi-check" ? "text-[var(--color-primary)]" : step === "done" ? "text-green-600" : "text-gray-400"
+            step === "bi-check" ? "text-[var(--color-primary)]" : step === "done" ? "text-green-600 dark:text-green-400" : "text-gray-400 dark:text-slate-500"
           }`}>
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-              step === "bi-check" ? "bg-[var(--color-primary)] text-white" : step === "done" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"
+              step === "bi-check" ? "bg-[var(--color-primary)] text-white" : step === "done" ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400" : "bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-500"
             }`}>
               {step === "done" ? <IconCheck className="w-4 h-4" /> : "2"}
             </div>
             <span className="hidden sm:inline">BI Check</span>
           </div>
-          <div className={`flex-1 h-0.5 ${step === "done" ? "bg-green-400" : "bg-gray-200"}`} />
+          <div className={`flex-1 h-0.5 ${step === "done" ? "bg-green-400" : "bg-gray-200 dark:bg-slate-700"}`} />
           <div className={`flex items-center gap-1.5 text-sm font-medium ${
-            step === "done" ? "text-green-600" : "text-gray-400"
+            step === "done" ? "text-green-600 dark:text-green-400" : "text-gray-400 dark:text-slate-500"
           }`}>
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-              step === "done" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"
+              step === "done" ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400" : "bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-500"
             }`}>
               3
             </div>
@@ -147,34 +147,34 @@ export default function BorrowerOnboardingPage() {
       {/* Content */}
       <div className="max-w-lg mx-auto px-4 pb-8">
         {step === "profile" && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <h2 className="text-lg font-bold text-gray-900 mb-1">Data Diri</h2>
-            <p className="text-sm text-gray-500 mb-4">Lengkapi data diri Anda untuk keperluan verifikasi dan dokumen.</p>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-5">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">Data Diri</h2>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">Lengkapi data diri Anda untuk keperluan verifikasi dan dokumen.</p>
 
             {profileError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm">{profileError}</div>
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 mb-4 text-sm">{profileError}</div>
             )}
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap <span className="text-red-500">*</span></label>
-                <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Sesuai KTP" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Nama Lengkap <span className="text-red-500 dark:text-red-400">*</span></label>
+                <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full px-4 py-3 border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Sesuai KTP" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Telepon <span className="text-red-500">*</span></label>
-                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="08xxxxxxxxxx" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Nomor Telepon <span className="text-red-500 dark:text-red-400">*</span></label>
+                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full px-4 py-3 border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="08xxxxxxxxxx" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">NIK / No. KTP <span className="text-red-500">*</span></label>
-                <input type="text" value={idNumber} onChange={(e) => setIdNumber(e.target.value)} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="16 digit NIK" maxLength={16} />
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">NIK / No. KTP <span className="text-red-500 dark:text-red-400">*</span></label>
+                <input type="text" value={idNumber} onChange={(e) => setIdNumber(e.target.value)} className="w-full px-4 py-3 border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="16 digit NIK" maxLength={16} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Alamat Lengkap <span className="text-red-500">*</span></label>
-                <textarea value={address} onChange={(e) => setAddress(e.target.value)} rows={2} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)] resize-none" placeholder="Jalan, RT/RW, Kelurahan, Kecamatan, Kota" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Alamat Lengkap <span className="text-red-500 dark:text-red-400">*</span></label>
+                <textarea value={address} onChange={(e) => setAddress(e.target.value)} rows={2} className="w-full px-4 py-3 border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)] resize-none" placeholder="Jalan, RT/RW, Kelurahan, Kecamatan, Kota" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Pekerjaan <span className="text-red-500">*</span></label>
-                <input type="text" value={occupation} onChange={(e) => setOccupation(e.target.value)} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Contoh: Pedagang, Karyawan, Wiraswasta" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Pekerjaan <span className="text-red-500 dark:text-red-400">*</span></label>
+                <input type="text" value={occupation} onChange={(e) => setOccupation(e.target.value)} className="w-full px-4 py-3 border border-gray-200 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Contoh: Pedagang, Karyawan, Wiraswasta" />
               </div>
               <button
                 onClick={handleSaveProfile}
@@ -188,19 +188,19 @@ export default function BorrowerOnboardingPage() {
         )}
 
         {step === "bi-check" && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <h2 className="text-lg font-bold text-gray-900 mb-1">Pengecekan BI</h2>
-            <p className="text-sm text-gray-500 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-5">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">Pengecekan BI</h2>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
               Kami akan melakukan pengecekan riwayat kredit Anda melalui sistem BI Checking (SLIK OJK).
             </p>
 
             {biStatus === "none" && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-4">
                 <div className="flex items-start gap-3">
-                  <IconShield className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                  <IconShield className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-sm font-medium text-blue-900">Mengapa perlu BI Checking?</p>
-                    <p className="text-xs text-blue-700 mt-1">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-400">Mengapa perlu BI Checking?</p>
+                    <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">
                       Pengecekan ini memastikan Anda tidak memiliki kredit macet di lembaga keuangan lain. Hasilnya menentukan batas pinjaman Anda.
                     </p>
                   </div>
@@ -209,7 +209,7 @@ export default function BorrowerOnboardingPage() {
             )}
 
             {biError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm">{biError}</div>
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 mb-4 text-sm">{biError}</div>
             )}
 
             {biStatus === "none" && (
@@ -231,21 +231,21 @@ export default function BorrowerOnboardingPage() {
 
             {biStatus === "pending" && (
               <div className="text-center py-6">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-yellow-50 flex items-center justify-center">
-                  <IconClock className="w-8 h-8 text-yellow-600" />
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-yellow-50 dark:bg-yellow-900/20 flex items-center justify-center">
+                  <IconClock className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
                 </div>
-                <p className="text-gray-900 font-semibold mb-1">Pengecekan Sedang Berjalan</p>
-                <p className="text-gray-500 text-sm">Silakan tunggu beberapa saat...</p>
+                <p className="text-gray-900 dark:text-gray-100 font-semibold mb-1">Pengecekan Sedang Berjalan</p>
+                <p className="text-gray-500 dark:text-slate-400 text-sm">Silakan tunggu beberapa saat...</p>
               </div>
             )}
 
             {biStatus === "approved" && (
               <div className="text-center py-6">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-50 flex items-center justify-center">
-                  <IconCheck className="w-8 h-8 text-green-600" />
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
+                  <IconCheck className="w-8 h-8 text-green-600 dark:text-green-400" />
                 </div>
-                <p className="text-green-800 font-semibold mb-1">BI Checking Berhasil!</p>
-                <p className="text-green-700 text-sm mb-4">
+                <p className="text-green-800 dark:text-green-400 font-semibold mb-1">BI Checking Berhasil!</p>
+                <p className="text-green-700 dark:text-green-400 text-sm mb-4">
                   Riwayat kredit Anda bersih. Anda bisa mengajukan pinjaman sekarang.
                 </p>
                 <button
@@ -259,16 +259,16 @@ export default function BorrowerOnboardingPage() {
 
             {biStatus === "rejected" && (
               <div className="text-center py-6">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-50 flex items-center justify-center">
-                  <IconClock className="w-8 h-8 text-red-600" />
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                  <IconClock className="w-8 h-8 text-red-600 dark:text-red-400" />
                 </div>
-                <p className="text-red-800 font-semibold mb-1">BI Checking Tidak Lolos</p>
-                <p className="text-red-700 text-sm mb-4">
+                <p className="text-red-800 dark:text-red-400 font-semibold mb-1">BI Checking Tidak Lolos</p>
+                <p className="text-red-700 dark:text-red-400 text-sm mb-4">
                   Terdapat catatan kredit yang perlu diperbaiki. Silakan hubungi admin untuk informasi lebih lanjut.
                 </p>
                 <button
                   onClick={handleBiCheck}
-                  className="bg-gray-100 text-gray-700 px-8 py-3 rounded-xl font-semibold mr-2"
+                  className="bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 px-8 py-3 rounded-xl font-semibold mr-2"
                 >
                   Coba Lagi
                 </button>
@@ -285,11 +285,11 @@ export default function BorrowerOnboardingPage() {
 
         {step === "done" && (
           <div className="text-center py-12">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-100 flex items-center justify-center">
-              <IconCheck className="w-10 h-10 text-green-600" />
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              <IconCheck className="w-10 h-10 text-green-600 dark:text-green-400" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Profil Lengkap!</h2>
-            <p className="text-gray-500 text-sm mb-8 max-w-xs mx-auto">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Profil Lengkap!</h2>
+            <p className="text-gray-500 dark:text-slate-400 text-sm mb-8 max-w-xs mx-auto">
               Anda sudah bisa mengajukan pinjaman kebajikan. Selamat bergabung di Amanah!
             </p>
             <button

@@ -22,7 +22,18 @@ import adminRoutes from "./routes/admin"
 
 const app = new Hono()
 
-app.use("*", cors())
+const corsOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean)
+  : ["http://localhost:5173"]
+
+app.use("*", cors({
+  origin: corsOrigins,
+  credentials: true,
+  allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowHeaders: ["Content-Type", "Authorization"],
+  exposeHeaders: ["Content-Length"],
+  maxAge: 600,
+}))
 app.use("*", logger())
 
 // Serve static files from uploads directory

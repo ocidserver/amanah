@@ -5,6 +5,8 @@ import { z } from "zod"
 import { db } from "../db"
 import { trustees, trusteeRequests, loans, users } from "../db/schema"
 import { authMiddleware, AuthEnv } from "../middleware/auth"
+import { sendTrusteeRequestEmail, sendTrusteeResponseEmail, sendCollateralReturnedEmail } from "../lib/email"
+import { validateFile, validateFileContent, saveFile } from "../lib/storage"
 
 const trusteeAppRoutes = new Hono<AuthEnv>()
 
@@ -211,6 +213,14 @@ trusteeAppRoutes.patch("/requests/:id/accept", async (c) => {
         .update(loans)
         .set({ trusteeId: trustee.id, collateralStatus: "held", updatedAt: new Date() })
         .where(eq(loans.id, request.loanId))
+
+      // Notify lender
+      if (loan.lenderId) {
+        const [lenderUser] = await db.select({ email: users.email, displayName: users.displayName }).from(users).where(eq(users.id, loan.lenderId))
+        if (lenderUser?.email) {
+          sendTrusteeResponseEmail(lenderUser.email, loan.borrowerAlias, trustee.name, "accepted").catch(() => {})
+        }
+      }
     }
   }
 
@@ -333,9 +343,80 @@ trusteeAppRoutes.patch("/loans/:loanId/collateral-return", async (c) => {
     return c.json({ error: "Jaminan hanya bisa dikembalikan setelah pinjaman lunas" }, 400)
   }
 
+  if (loan.collateralStatus !== "held" && loan.collateralStatus !== "verified") {
+    return c.json({ error: "Jaminan harus dalam status dipegang atau terverifikasi sebelum dikembalikan" }, 400)
+  }
+
   const [updated] = await db
     .update(loans)
     .set({ collateralStatus: "returned", updatedAt: new Date() })
+    .where(eq(loans.id, loanId))
+    .returning()
+
+  // Notify lender and borrower
+  if (loan.lenderId) {
+    const [lenderUser] = await db.select({ email: users.email, displayName: users.displayName }).from(users).where(eq(users.id, loan.lenderId))
+    if (lenderUser?.email) {
+      sendCollateralReturnedEmail(lenderUser.email, loan.borrowerAlias, trustee.name).catch(() => {})
+    }
+  }
+  if (loan.borrowerId) {
+    const [borrowerUser] = await db.select({ email: users.email, displayName: users.displayName }).from(users).where(eq(users.id, loan.borrowerId))
+    if (borrowerUser?.email) {
+      sendCollateralReturnedEmail(borrowerUser.email, loan.borrowerAlias, trustee.name).catch(() => {})
+    }
+  }
+
+  return c.json({ loan: updated })
+})
+
+trusteeAppRoutes.patch("/loans/:loanId/collateral-proof", async (c) => {
+  const user = c.get("user")
+  const loanId = c.req.param("loanId")!
+
+  const trusteeRows = await db
+    .select()
+    .from(trustees)
+    .where(eq(trustees.profileId, user.userId))
+
+  if (trusteeRows.length === 0) {
+    return c.json({ error: "Profil wali amanah tidak ditemukan" }, 404)
+  }
+
+  const trustee = trusteeRows[0]
+
+  const [loan] = await db.select().from(loans).where(eq(loans.id, loanId))
+
+  if (!loan) {
+    return c.json({ error: "Pinjaman tidak ditemukan" }, 404)
+  }
+
+  if (loan.trusteeId !== trustee.id) {
+    return c.json({ error: "Anda bukan wali amanah untuk pinjaman ini" }, 403)
+  }
+
+  const formData = await c.req.parseBody()
+  const file = formData["image"]
+
+  if (!file || typeof file === "string") {
+    return c.json({ error: "File gambar wajib diupload" }, 400)
+  }
+
+  const validation = validateFile("collateral", file)
+  if (!validation.valid) {
+    return c.json({ error: validation.error }, 400)
+  }
+
+  const contentValidation = await validateFileContent(file)
+  if (!contentValidation.valid) {
+    return c.json({ error: contentValidation.error }, 400)
+  }
+
+  const proofUrl = await saveFile("collateral", file, `collateral-${loanId}`)
+
+  const [updated] = await db
+    .update(loans)
+    .set({ collateralProofUrl: proofUrl, updatedAt: new Date() })
     .where(eq(loans.id, loanId))
     .returning()
 

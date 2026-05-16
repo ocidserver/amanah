@@ -94,65 +94,65 @@ export default function PinjamanBaruPage() {
 
   return (
     <div className="px-4 pt-2 pb-8">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">Catat Pinjaman Baru</h2>
+      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Catat Pinjaman Baru</h2>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm">{error}</div>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 mb-4 text-sm">{error}</div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email Peminjam <span className="text-gray-400 font-normal">(opsional)</span></label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Email Peminjam <span className="text-gray-400 dark:text-slate-500 font-normal">(opsional)</span></label>
           <input
             type="email"
             value={form.borrowerEmail}
             onChange={(e) => { setForm({ ...form, borrowerEmail: e.target.value }); if (!e.target.value.trim()) setBorrowerLookup(null) }}
             onBlur={handleBorrowerEmailBlur}
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+            className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
             placeholder="peminjam@email.com"
           />
-          {lookingUpBorrower && <p className="text-xs text-gray-400 mt-1">Mencari akun peminjam...</p>}
+          {lookingUpBorrower && <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Mencari akun peminjam...</p>}
           {borrowerLookup?.found && (
-            <p className="text-xs text-green-600 mt-1">
+            <p className="text-xs text-green-600 dark:text-green-400 mt-1">
               Akun ditemukan: <strong>{borrowerLookup.displayName || "Tanpa Nama"}</strong>
               {borrowerLookup.tier && ` (${borrowerLookup.tier})`}
               {borrowerLookup.maxAmount && ` — Maks. ${formatCurrency(borrowerLookup.maxAmount)}`}
             </p>
           )}
           {borrowerLookup && !borrowerLookup.found && form.borrowerEmail.trim() && (
-            <p className="text-xs text-yellow-600 mt-1">Email belum terdaftar sebagai peminjam. Undangan akan dikirim setelah pinjaman dibuat.</p>
+            <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">Email belum terdaftar sebagai peminjam. Undangan akan dikirim setelah pinjaman dibuat.</p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Alias Peminjam</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Alias Peminjam</label>
           <input
             type="text"
             value={form.borrowerAlias}
             onChange={(e) => setForm({ ...form, borrowerAlias: e.target.value })}
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+            className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
             placeholder="Peminjam A"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nominal (Rp)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Nominal (Rp)</label>
           <input
             type="number"
             value={form.amount}
             onChange={(e) => setForm({ ...form, amount: e.target.value })}
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+            className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
             placeholder="1000000"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Tujuan Pinjaman</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Tujuan Pinjaman</label>
           <select
             value={form.purpose}
             onChange={(e) => setForm({ ...form, purpose: e.target.value })}
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+            className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
           >
             {Object.entries(LOAN_PURPOSE).map(([key, label]) => (
               <option key={key} value={key}>{label}</option>
@@ -161,12 +161,12 @@ export default function PinjamanBaruPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Durasi (bulan)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Durasi (bulan)</label>
           <input
             type="number"
             value={form.durationMonths}
             onChange={(e) => setForm({ ...form, durationMonths: e.target.value })}
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+            className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
             min={1}
             max={60}
             required
@@ -174,11 +174,11 @@ export default function PinjamanBaruPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Pola Cicilan</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Pola Cicilan</label>
           <select
             value={form.installmentType}
             onChange={(e) => setForm({ ...form, installmentType: e.target.value })}
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+            className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
           >
             {Object.entries(INSTALLMENT_TYPE).map(([key, label]) => (
               <option key={key} value={key}>{label}</option>
@@ -187,11 +187,11 @@ export default function PinjamanBaruPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Jenis Jaminan</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Jenis Jaminan</label>
           <select
             value={form.collateralType}
             onChange={(e) => setForm({ ...form, collateralType: e.target.value })}
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+            className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
           >
             {Object.entries(COLLATERAL_TYPE).map(([key, label]) => (
               <option key={key} value={key}>{label}</option>
@@ -200,11 +200,11 @@ export default function PinjamanBaruPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Wali Amanah <span className="text-gray-400 font-normal">(opsional)</span></label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Wali Amanah <span className="text-gray-400 dark:text-slate-500 font-normal">(opsional)</span></label>
           <select
             value={form.trusteeId}
             onChange={(e) => setForm({ ...form, trusteeId: e.target.value })}
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+            className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
           >
             <option value="">Tanpa Wali Amanah</option>
             {trustees.map((t) => (
@@ -212,33 +212,33 @@ export default function PinjamanBaruPage() {
             ))}
           </select>
           {trustees.length === 0 && (
-            <p className="text-xs text-gray-400 mt-1">Belum ada wali amanah. <a href="/wali-amanah/undang" className="text-[var(--color-primary)] underline">Undang sekarang</a></p>
+            <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Belum ada wali amanah. <a href="/wali-amanah/undang" className="text-[var(--color-primary)] underline">Undang sekarang</a></p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Catatan <span className="text-gray-400 font-normal">(opsional)</span></label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Catatan <span className="text-gray-400 dark:text-slate-500 font-normal">(opsional)</span></label>
           <textarea
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none"
+            className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none"
             rows={3}
             placeholder="Catatan tambahan untuk pinjaman ini..."
             maxLength={500}
           />
-          <p className="text-xs text-gray-400 mt-1">{form.notes.length}/500</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{form.notes.length}/500</p>
         </div>
 
         <div className="space-y-3 pt-2">
-          <label className="flex items-center gap-3 text-sm text-gray-700">
+          <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-slate-300">
             <input type="checkbox" checked={form.hideBorrower} onChange={(e) => setForm({ ...form, hideBorrower: e.target.checked })} className="accent-[var(--color-primary)] w-4 h-4" />
             Sembunyikan alias peminjam
           </label>
-          <label className="flex items-center gap-3 text-sm text-gray-700">
+          <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-slate-300">
             <input type="checkbox" checked={form.reminderEnabled} onChange={(e) => setForm({ ...form, reminderEnabled: e.target.checked })} className="accent-[var(--color-primary)] w-4 h-4" />
             Aktifkan pengingat cicilan
           </label>
-          <label className="flex items-center gap-3 text-sm text-gray-700">
+          <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-slate-300">
             <input type="checkbox" checked={form.doaLunasEnabled} onChange={(e) => setForm({ ...form, doaLunasEnabled: e.target.checked })} className="accent-[var(--color-primary)] w-4 h-4" />
             Aktifkan doa lunas
           </label>

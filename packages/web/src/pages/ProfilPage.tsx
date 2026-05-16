@@ -1,8 +1,9 @@
 import { useState } from "react"
 import { useAuth } from "../hooks/use-auth"
+import { useI18n } from "../hooks/use-i18n"
 import { useNavigate } from "react-router-dom"
 import { api } from "../lib/api"
-import { IconLogOut, IconChevronRight, IconEdit, IconCheck, IconShield, IconMail, IconArrowRightLeft } from "../components/Icons"
+import { IconLogOut, IconChevronRight, IconEdit, IconCheck, IconShield, IconMail, IconArrowRightLeft, IconStar, IconGlobe } from "../components/Icons"
 import { LENDER_TIER_LABELS } from "@amanah/shared"
 import type { LenderTier } from "@amanah/shared"
 
@@ -16,22 +17,23 @@ function SettingItem({ icon, label, subtitle, onClick, danger }: {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-gray-50 transition-colors ${
-        danger ? "text-red-600" : "text-gray-900"
+      className={`w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-gray-50 dark:active:bg-slate-700 transition-colors ${
+        danger ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-gray-100"
       }`}
     >
-      <span className={danger ? "text-red-500" : "text-gray-400"}>{icon}</span>
+      <span className={danger ? "text-red-500 dark:text-red-400" : "text-gray-400 dark:text-slate-500"}>{icon}</span>
       <div className="flex-1 min-w-0">
         <p className="font-medium text-[15px]">{label}</p>
-        {subtitle && <p className="text-xs text-gray-400 truncate">{subtitle}</p>}
+        {subtitle && <p className="text-xs text-gray-400 dark:text-slate-500 truncate">{subtitle}</p>}
       </div>
-      <IconChevronRight className="w-4 h-4 text-gray-300" />
+      <IconChevronRight className="w-4 h-4 text-gray-300 dark:text-slate-600" />
     </button>
   )
 }
 
 export default function ProfilPage() {
   const { signOut, user, updateProfile } = useAuth()
+  const { language, setLanguage } = useI18n()
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
   const [showChangePassword, setShowChangePassword] = useState(false)
@@ -100,31 +102,31 @@ export default function ProfilPage() {
   if (showChangePassword) {
     return (
       <div className="px-4 pt-4 pb-6">
-        <button onClick={() => { setShowChangePassword(false); setPwSuccess(false) }} className="inline-flex items-center gap-1 text-sm text-gray-500 mb-4">
+        <button onClick={() => { setShowChangePassword(false); setPwSuccess(false) }} className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-slate-400 mb-4">
           <IconChevronRight className="w-4 h-4 rotate-180" /> Kembali
         </button>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Ubah Password</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Ubah Password</h2>
         {pwSuccess ? (
           <div className="text-center py-8">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-green-50 flex items-center justify-center">
-              <IconCheck className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
+              <IconCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
-            <p className="text-gray-900 font-semibold">Password Berhasil Diubah</p>
+            <p className="text-gray-900 dark:text-gray-100 font-semibold">Password Berhasil Diubah</p>
           </div>
         ) : (
           <form onSubmit={handleChangePassword} className="space-y-4">
-            {pwError && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">{pwError}</div>}
+            {pwError && <div className="bg-red-50 dark:bg-red-900/20 dark:border-red-900/30 border border-red-200 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 text-sm">{pwError}</div>}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password Saat Ini</label>
-              <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Masukkan password saat ini" required />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password Saat Ini</label>
+              <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Masukkan password saat ini" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password Baru</label>
-              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Minimal 6 karakter" required minLength={6} />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password Baru</label>
+              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Minimal 6 karakter" required minLength={6} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password Baru</label>
-              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Ulangi password baru" required minLength={6} />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Konfirmasi Password Baru</label>
+              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Ulangi password baru" required minLength={6} />
             </div>
             <button type="submit" disabled={pwLoading} className="w-full bg-[var(--color-primary)] text-white rounded-xl py-3 font-semibold disabled:opacity-50">
               {pwLoading ? "Menyimpan..." : "Ubah Password"}
@@ -138,28 +140,28 @@ export default function ProfilPage() {
   if (showRoleChange) {
     return (
       <div className="px-4 pt-4 pb-6">
-        <button onClick={() => { setShowRoleChange(false); setRoleChangeSuccess(false); setRoleChangeError("") }} className="inline-flex items-center gap-1 text-sm text-gray-500 mb-4">
+        <button onClick={() => { setShowRoleChange(false); setRoleChangeSuccess(false); setRoleChangeError("") }} className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-slate-400 mb-4">
           <IconChevronRight className="w-4 h-4 rotate-180" /> Kembali
         </button>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Ubah Peran</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Ubah Peran</h2>
         {roleChangeSuccess ? (
           <div className="text-center py-8">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-green-50 flex items-center justify-center">
-              <IconArrowRightLeft className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
+              <IconArrowRightLeft className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
-            <p className="text-gray-900 font-semibold mb-1">Permintaan Terkirim</p>
-            <p className="text-gray-500 text-sm">Admin akan meninjau permintaan Anda.</p>
+            <p className="text-gray-900 dark:text-gray-100 font-semibold mb-1">Permintaan Terkirim</p>
+            <p className="text-gray-500 dark:text-slate-400 text-sm">Admin akan meninjau permintaan Anda.</p>
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <p className="text-sm font-medium text-blue-900">Ubah dari Pemberi Pinjaman ke Peminjam?</p>
-              <p className="text-xs text-blue-700 mt-1">
+            <div className="bg-blue-50 dark:bg-blue-900/20 dark:border-blue-900/30 border border-blue-200 rounded-xl p-4">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-300">Ubah dari Pemberi Pinjaman ke Peminjam?</p>
+              <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">
                 Permintaan ini akan ditinjau oleh admin. Proses bisa memakan waktu 1-2 hari kerja.
               </p>
             </div>
             {roleChangeError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">{roleChangeError}</div>
+              <div className="bg-red-50 dark:bg-red-900/20 dark:border-red-900/30 border border-red-200 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 text-sm">{roleChangeError}</div>
             )}
             <button
               onClick={handleRoleChange}
@@ -176,9 +178,9 @@ export default function ProfilPage() {
 
   return (
     <div className="px-4 pt-4 pb-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">Profil</h2>
+      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Profil</h2>
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-4">
+      <div className="bg-white dark:bg-slate-800 dark:border-slate-700 rounded-2xl border border-gray-100 p-5 mb-4">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center text-2xl font-bold shrink-0">
             {initial}
@@ -190,61 +192,95 @@ export default function ProfilPage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="flex-1 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   autoFocus
                   onKeyDown={(e) => { if (e.key === "Enter") handleSaveName() }}
                 />
                 <button onClick={handleSaveName} disabled={saving} className="text-sm text-[var(--color-primary)] font-medium disabled:opacity-50">
                   {saving ? "..." : "Simpan"}
                 </button>
-                <button onClick={() => { setEditing(false); setName(user?.displayName || "") }} className="text-sm text-gray-400">
+                <button onClick={() => { setEditing(false); setName(user?.displayName || "") }} className="text-sm text-gray-400 dark:text-slate-500">
                   Batal
                 </button>
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <p className="font-semibold text-gray-900 text-lg truncate">{user?.displayName || "Tanpa Nama"}</p>
-                <button onClick={() => { setEditing(true); setName(user?.displayName || "") }} className="text-gray-400 hover:text-[var(--color-primary)]">
+                <p className="font-semibold text-gray-900 dark:text-gray-100 text-lg truncate">{user?.displayName || "Tanpa Nama"}</p>
+                <button onClick={() => { setEditing(true); setName(user?.displayName || "") }} className="text-gray-400 dark:text-slate-500 hover:text-[var(--color-primary)]">
                   <IconEdit className="w-4 h-4" />
                 </button>
               </div>
             )}
-            <p className="text-sm text-gray-500 truncate">{user?.email}</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400 truncate">{user?.email}</p>
             <span className="inline-block mt-1 text-xs bg-[var(--color-primary)] text-white px-2 py-0.5 rounded-full font-medium">
               {tierLabel}
             </span>
+            {user?.rating && parseFloat(user.rating) > 0 && (
+              <div className="flex items-center gap-1 mt-1">
+                <IconStar className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{parseFloat(user.rating).toFixed(1)}</span>
+                {user?.ratingCount && user.ratingCount > 0 && (
+                  <span className="text-xs text-gray-400 dark:text-slate-500">({user.ratingCount} ulasan)</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Akun</p>
+      <div className="bg-white dark:bg-slate-800 dark:border-slate-700 rounded-2xl border border-gray-100 overflow-hidden mb-4">
+        <div className="px-4 py-3 bg-gray-50 dark:bg-slate-800/50 dark:border-slate-700 border-b border-gray-100">
+          <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Akun</p>
         </div>
         <SettingItem
           icon={<IconMail className="w-5 h-5" />}
           label="Email"
           subtitle={user?.email || "-"}
         />
-        <div className="h-px bg-gray-100 ml-12" />
+        <div className="h-px bg-gray-100 dark:bg-slate-700 ml-12" />
         <SettingItem
           icon={<IconShield className="w-5 h-5" />}
           label="Keamanan"
           subtitle="Ubah password"
           onClick={() => setShowChangePassword(true)}
         />
-        <div className="h-px bg-gray-100 ml-12" />
+        <div className="h-px bg-gray-100 dark:bg-slate-700 ml-12" />
         <SettingItem
           icon={<IconArrowRightLeft className="w-5 h-5" />}
           label="Ubah Peran"
           subtitle="Pemberi Pinjaman → Peminjam"
           onClick={() => setShowRoleChange(true)}
         />
+        <div className="h-px bg-gray-100 dark:bg-slate-700 ml-12" />
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-gray-400 dark:text-slate-500"><IconGlobe className="w-5 h-5" /></span>
+            <div>
+              <p className="font-medium text-[15px] text-gray-900 dark:text-gray-100">Bahasa</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500">{language === "id" ? "Indonesia" : "English"}</p>
+            </div>
+          </div>
+          <div className="flex gap-1">
+            {(["id", "en"] as const).map((lang) => (
+              <button
+                key={lang}
+                onClick={() => setLanguage(lang)}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                  language === lang
+                    ? "bg-[var(--color-primary)] text-white"
+                    : "bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600"
+                }`}
+              >
+                {lang === "id" ? "ID" : "EN"}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <button
         onClick={handleSignOut}
-        className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 border border-red-100 rounded-2xl py-3.5 font-medium active:scale-[0.98] transition-transform"
+        className="w-full flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/30 rounded-2xl py-3.5 font-medium active:scale-[0.98] transition-transform"
       >
         <IconLogOut className="w-4 h-4" />
         Keluar

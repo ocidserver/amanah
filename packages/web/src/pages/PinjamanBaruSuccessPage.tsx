@@ -18,22 +18,22 @@ export default function PinjamanBaruSuccessPage() {
   return (
     <div className="px-4 pt-4 flex flex-col items-center min-h-[60vh]">
       <div className="text-5xl mb-4">🎉</div>
-      <h2 className="text-2xl font-bold text-gray-900 text-center">Pinjaman Berhasil Dibuat</h2>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 text-center">Pinjaman Berhasil Dibuat</h2>
 
       {invitationSent && borrowerEmail ? (
-        <p className="text-gray-500 mt-2 text-center max-w-sm">
+        <p className="text-gray-500 dark:text-slate-400 mt-2 text-center max-w-sm">
           Undangan telah dikirim ke <strong>{borrowerEmail}</strong>. Peminjam akan menerima email untuk bergabung.
         </p>
       ) : (
-        <p className="text-gray-500 mt-2 text-center max-w-sm">
+        <p className="text-gray-500 dark:text-slate-400 mt-2 text-center max-w-sm">
           Pinjaman telah dicatat. Anda bisa mengundang peminjam melalui email di halaman detail pinjaman.
         </p>
       )}
 
       {loan && (
-        <div className="mt-6 bg-gray-50 rounded-2xl p-5 w-full max-w-sm text-center">
-          <p className="text-xs text-gray-500 mb-1">Detail Pinjaman</p>
-          <p className="text-sm text-gray-500 mt-2">
+        <div className="mt-6 bg-gray-50 dark:bg-slate-700 rounded-2xl p-5 w-full max-w-sm text-center">
+          <p className="text-xs text-gray-500 dark:text-slate-400 mb-1">Detail Pinjaman</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-2">
             {loan.borrowerAlias} · {formatCurrency(loan.amount)} · {loan.durationMonths} bulan
           </p>
         </div>
@@ -48,7 +48,7 @@ export default function PinjamanBaruSuccessPage() {
         </Link>
         <Link
           to="/dashboard"
-          className="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-xl font-medium active:scale-[0.98] transition-transform"
+          className="bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 px-6 py-2.5 rounded-xl font-medium active:scale-[0.98] transition-transform"
         >
           Beranda
         </Link>

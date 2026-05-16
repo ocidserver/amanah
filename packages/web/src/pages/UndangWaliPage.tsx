@@ -36,35 +36,35 @@ export default function UndangWaliPage() {
 
   return (
     <div className="px-4 pt-2 pb-8">
-      <button onClick={() => navigate(-1)} className="text-sm text-gray-500 mb-4 inline-block">← Kembali</button>
-      <h2 className="text-xl font-bold text-gray-900 mb-1">Tambah Wali Amanah</h2>
-      <p className="text-gray-500 text-sm mb-6">
+      <button onClick={() => navigate(-1)} className="text-sm text-gray-500 dark:text-slate-400 mb-4 inline-block">← Kembali</button>
+      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">Tambah Wali Amanah</h2>
+      <p className="text-gray-500 dark:text-slate-400 text-sm mb-6">
         Tambahkan wali amanah yang akan memegang jaminan pinjaman Anda.
       </p>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm">{error}</div>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 mb-4 text-sm">{error}</div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nama</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Nama</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+            className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
             placeholder="Nama wali amanah"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Jenis</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Jenis</label>
           <select
             value={type}
             onChange={(e) => setType(e.target.value as "personal" | "institution")}
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+            className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
           >
             <option value="personal">Personal</option>
             <option value="institution">Institusi</option>
@@ -72,24 +72,24 @@ export default function UndangWaliPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email (opsional)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Email (opsional)</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+            className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
             placeholder="email@contoh.com"
           />
         </div>
 
         {type === "institution" && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nama Institusi</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Nama Institusi</label>
             <input
               type="text"
               value={institution}
               onChange={(e) => setInstitution(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+              className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
               placeholder="Nama masjid / lembaga"
             />
           </div>

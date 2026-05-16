@@ -4,6 +4,7 @@ interface RequestOptions {
   method?: string
   body?: unknown
   headers?: Record<string, string>
+  retries?: number
 }
 
 function getAccessToken(): string | null {
@@ -64,8 +65,44 @@ async function refreshAccessToken(): Promise<string | null> {
   return refreshPromise
 }
 
+function getErrorMessage(status: number, serverError: string | undefined): string {
+  const messages: Record<number, string> = {
+    400: "Permintaan tidak valid",
+    401: "Sesi berakhir, silakan masuk kembali",
+    403: "Anda tidak memiliki akses",
+    404: "Data tidak ditemukan",
+    409: "Data sudah ada",
+    429: "Terlalu banyak permintaan, coba beberapa saat lagi",
+    500: "Terjadi kesalahan pada server",
+    502: "Server tidak dapat dijangkau",
+    503: "Server sedang tidak tersedia",
+  }
+  return serverError || messages[status] || `Terjadi kesalahan (${status})`
+}
+
+async function fetchWithRetry(url: string, options: RequestInit, retries = 2): Promise<Response> {
+  try {
+    const response = await fetch(url, options)
+    if (response.status >= 500 && retries > 0) {
+      await new Promise((r) => setTimeout(r, 1000 * (3 - retries)))
+      return fetchWithRetry(url, options, retries - 1)
+    }
+    return response
+  } catch (err) {
+    if (retries > 0 && (err instanceof TypeError)) {
+      await new Promise((r) => setTimeout(r, 1000 * (3 - retries)))
+      return fetchWithRetry(url, options, retries - 1)
+    }
+    throw err
+  }
+}
+
 async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = "GET", body, headers = {} } = options
+  const { method = "GET", body, headers = {}, retries = 2 } = options
+
+  if (!navigator.onLine) {
+    throw new Error("Tidak ada koneksi internet")
+  }
 
   const token = getAccessToken()
   if (token) {
@@ -73,11 +110,16 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
   }
   headers["Content-Type"] = "application/json"
 
-  const response = await fetch(`${API_URL}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  })
+  let response: Response
+  try {
+    response = await fetchWithRetry(`${API_URL}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    }, retries)
+  } catch {
+    throw new Error("Tidak dapat terhubung ke server. Periksa koneksi internet Anda.")
+  }
 
   if (response.status === 401 && token) {
     const newToken = await refreshAccessToken()
@@ -91,7 +133,7 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
 
       if (!retryResponse.ok) {
         const error = await retryResponse.json().catch(() => ({ error: "Network error" }))
-        throw new Error(error.error ?? `API error: ${retryResponse.status}`)
+        throw new Error(getErrorMessage(retryResponse.status, error.error))
       }
 
       return retryResponse.json()
@@ -99,23 +141,77 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
 
     await clearTokens()
     window.location.href = "/login"
-    throw new Error("Session expired")
+    throw new Error("Sesi berakhir, silakan masuk kembali")
   }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: "Network error" }))
-    throw new Error(error.error ?? `API error: ${response.status}`)
+    const error = await response.json().catch(() => ({ error: undefined }))
+    throw new Error(getErrorMessage(response.status, error.error))
+  }
+
+  return response.json()
+}
+
+async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
+  if (!navigator.onLine) {
+    throw new Error("Tidak ada koneksi internet")
+  }
+
+  const token = getAccessToken()
+  const headers: Record<string, string> = {}
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`
+  }
+
+  let response: Response
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      method: "POST",
+      headers,
+      body: formData,
+    })
+  } catch {
+    throw new Error("Tidak dapat terhubung ke server. Periksa koneksi internet Anda.")
+  }
+
+  if (response.status === 401 && token) {
+    const newToken = await refreshAccessToken()
+    if (newToken) {
+      headers["Authorization"] = `Bearer ${newToken}`
+      const retryResponse = await fetch(`${API_URL}${path}`, {
+        method: "POST",
+        headers,
+        body: formData,
+      })
+
+      if (!retryResponse.ok) {
+        const error = await retryResponse.json().catch(() => ({ error: "Network error" }))
+        throw new Error(getErrorMessage(retryResponse.status, error.error))
+      }
+
+      return retryResponse.json()
+    }
+
+    await clearTokens()
+    window.location.href = "/login"
+    throw new Error("Sesi berakhir, silakan masuk kembali")
+  }
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: undefined }))
+    throw new Error(getErrorMessage(response.status, error.error))
   }
 
   return response.json()
 }
 
 export const api = {
-  get: <T>(path: string) => apiRequest<T>(path),
-  post: <T>(path: string, body: unknown) => apiRequest<T>(path, { method: "POST", body }),
-  put: <T>(path: string, body: unknown) => apiRequest<T>(path, { method: "PUT", body }),
-  patch: <T>(path: string, body: unknown) => apiRequest<T>(path, { method: "PATCH", body }),
-  delete: <T>(path: string) => apiRequest<T>(path, { method: "DELETE" }),
+  get: <T>(path: string, retries?: number) => apiRequest<T>(path, { retries }),
+  post: <T>(path: string, body: unknown, retries?: number) => apiRequest<T>(path, { method: "POST", body, retries }),
+  put: <T>(path: string, body: unknown, retries?: number) => apiRequest<T>(path, { method: "PUT", body, retries }),
+  patch: <T>(path: string, body: unknown, retries?: number) => apiRequest<T>(path, { method: "PATCH", body, retries }),
+  delete: <T>(path: string, retries?: number) => apiRequest<T>(path, { method: "DELETE", retries }),
+  upload: <T>(path: string, formData: FormData) => apiUpload<T>(path, formData),
 }
 
 export { setTokens, clearTokens, getAccessToken }

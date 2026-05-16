@@ -18,7 +18,10 @@ export default function LoginPage() {
     try {
       await login(email.trim().toLowerCase(), password)
       const user = useAuthStore.getState().user
-      navigate(user?.role === "borrower" ? "/borrower" : "/dashboard", { replace: true })
+      if (user?.role === "admin") navigate("/admin", { replace: true })
+      else if (user?.role === "borrower") navigate("/borrower", { replace: true })
+      else if (user?.role === "trustee") navigate("/trustee", { replace: true })
+      else navigate("/dashboard", { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login gagal")
     } finally {
@@ -55,7 +58,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-white">
+      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-white dark:bg-slate-800">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-4 lg:hidden">
@@ -63,29 +66,29 @@ export default function LoginPage() {
                 <span className="text-white font-bold text-lg">A</span>
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">Masuk</h1>
-            <p className="text-gray-500 mt-1 text-sm">Selamat datang kembali di Amanah</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Masuk</h1>
+            <p className="text-gray-500 dark:text-slate-400 mt-1 text-sm">Selamat datang kembali di Amanah</p>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm">{error}</div>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 mb-4 text-sm">{error}</div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Email</label>
               <input
                 type="email"
                 placeholder="email@contoh.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                 required
               />
             </div>
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm font-medium text-gray-700">Password</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300">Password</label>
                 <Link to="/forgot-password" className="text-xs text-[var(--color-primary)] font-medium">Lupa password?</Link>
               </div>
               <input
@@ -93,7 +96,7 @@ export default function LoginPage() {
                 placeholder="Masukkan password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                 required
               />
             </div>
@@ -106,8 +109,8 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-gray-100 text-center">
-            <p className="text-sm text-gray-500">
+          <div className="mt-6 pt-6 border-t border-gray-100 dark:border-slate-700 text-center">
+            <p className="text-sm text-gray-500 dark:text-slate-400">
               Belum punya akun?{" "}
               <Link to="/signup" className="text-[var(--color-primary)] font-semibold">
                 Daftar
@@ -116,7 +119,7 @@ export default function LoginPage() {
           </div>
 
 <div className="mt-4 text-center">
-              <p className="text-xs text-gray-400">Belum punya akun? <Link to="/signup" className="text-[var(--color-primary)] font-medium">Daftar sekarang</Link></p>
+              <p className="text-xs text-gray-400 dark:text-slate-500">Belum punya akun? <Link to="/signup" className="text-[var(--color-primary)] font-medium">Daftar sekarang</Link></p>
             </div>
         </div>
       </div>

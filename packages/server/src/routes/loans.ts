@@ -3,8 +3,9 @@ import { eq, and, desc } from "drizzle-orm"
 import { zValidator } from "@hono/zod-validator"
 import { z } from "zod"
 import { db } from "../db"
-import { loans, installments, users, loanInvitations, trusteeRequests } from "../db/schema"
-import { generateInvitationToken } from "../lib/utils"
+import { loans, installments, users, loanInvitations, trusteeRequests, trustees, completionMessages } from "../db/schema"
+import { generateInvitationToken, generateLoanCode } from "../lib/utils"
+import { generateContractPdf } from "../lib/contract"
 import { authMiddleware, AuthEnv } from "../middleware/auth"
 import { lenderOnlyMiddleware } from "../middleware/role"
 import { checkBorrowingLimit } from "../lib/tiers"
@@ -29,6 +30,56 @@ const createLoanSchema = z.object({
 
 loanRoutes.use("/", authMiddleware, lenderOnlyMiddleware)
 
+loanRoutes.get("/code/:loanCode", async (c) => {
+  const loanCode = c.req.param("loanCode")!.toUpperCase()
+
+  const [loan] = await db
+    .select()
+    .from(loans)
+    .where(eq(loans.loanCode, loanCode))
+
+  if (!loan) {
+    return c.json({ error: "Kode pinjaman tidak ditemukan" }, 404)
+  }
+
+  const loanInstallments = await db
+    .select()
+    .from(installments)
+    .where(eq(installments.loanId, loan.id))
+    .orderBy(installments.dueDate)
+
+  const lender = loan.lenderId
+    ? await db.select({ id: users.id, displayName: users.displayName, lenderTier: users.lenderTier }).from(users).where(eq(users.id, loan.lenderId)).then(r => r[0] ?? null)
+    : null
+
+  const completionMessage = loan.doaLunasEnabled
+    ? await db.select().from(completionMessages).where(eq(completionMessages.loanId, loan.id)).then(r => r[0] ?? null)
+    : null
+
+  return c.json({
+    loan: {
+      id: loan.id,
+      loanCode: loan.loanCode,
+      borrowerAlias: loan.borrowerAlias,
+      amount: loan.amount,
+      durationMonths: loan.durationMonths,
+      installmentType: loan.installmentType,
+      purpose: loan.purpose,
+      collateralType: loan.collateralType,
+      collateralStatus: loan.collateralStatus,
+      status: loan.status,
+      doaLunasEnabled: loan.doaLunasEnabled,
+      startDate: loan.startDate,
+      dueDate: loan.dueDate,
+      completedAt: loan.completedAt,
+      createdAt: loan.createdAt,
+    },
+    installments: loanInstallments,
+    lender,
+    completionMessage,
+  })
+})
+
 loanRoutes.get("/", async (c) => {
   const user = c.get("user")
   const allLoans = await db
@@ -38,6 +89,67 @@ loanRoutes.get("/", async (c) => {
     .orderBy(desc(loans.createdAt))
 
   return c.json({ loans: allLoans })
+})
+
+loanRoutes.get("/analytics", async (c) => {
+  const user = c.get("user")
+  const allLoans = await db.select().from(loans).where(eq(loans.lenderId, user.userId))
+
+  const totalLoans = allLoans.length
+  const activeLoans = allLoans.filter((l) => l.status === "active")
+  const completedLoans = allLoans.filter((l) => l.status === "completed")
+  const defaultedLoans = allLoans.filter((l) => l.status === "defaulted")
+  const cancelledLoans = allLoans.filter((l) => l.status === "cancelled")
+
+  const totalDisbursed = allLoans.reduce((s, l) => s + l.disbursedAmount, 0)
+  const totalReturned = completedLoans.reduce((s, l) => s + l.amount, 0)
+  const totalOutstanding = activeLoans.reduce((s, l) => s + l.amount, 0)
+
+  const repaymentRate = totalLoans > 0 ? Math.round((completedLoans.length / totalLoans) * 100) : 0
+
+  // Monthly breakdown for last 6 months
+  const monthlyData: { month: string; count: number; amount: number }[] = []
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date()
+    d.setMonth(d.getMonth() - i)
+    const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+    const monthLabel = d.toLocaleDateString("id-ID", { month: "short" })
+
+    const monthLoans = allLoans.filter((l) => {
+      const created = new Date(l.createdAt)
+      return `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, "0")}` === monthKey
+    })
+
+    monthlyData.push({
+      month: monthLabel,
+      count: monthLoans.length,
+      amount: monthLoans.reduce((s, l) => s + l.amount, 0),
+    })
+  }
+
+  // Purpose breakdown
+  const purposeMap: Record<string, number> = {}
+  allLoans.forEach((l) => {
+    purposeMap[l.purpose] = (purposeMap[l.purpose] || 0) + 1
+  })
+  const purposeBreakdown = Object.entries(purposeMap).map(([key, value]) => ({
+    purpose: key,
+    count: value,
+  }))
+
+  return c.json({
+    totalLoans,
+    activeLoans: activeLoans.length,
+    completedLoans: completedLoans.length,
+    defaultedLoans: defaultedLoans.length,
+    cancelledLoans: cancelledLoans.length,
+    totalDisbursed,
+    totalReturned,
+    totalOutstanding,
+    repaymentRate,
+    monthlyData,
+    purposeBreakdown,
+  })
 })
 
 loanRoutes.post("/", zValidator("json", createLoanSchema), async (c) => {
@@ -70,6 +182,7 @@ loanRoutes.post("/", zValidator("json", createLoanSchema), async (c) => {
       lenderId: user.userId,
       borrowerId,
       borrowerAlias: body.borrowerAlias,
+      loanCode: generateLoanCode(),
       amount: body.amount,
       durationMonths: body.durationMonths,
       installmentType: body.installmentType,
@@ -198,7 +311,7 @@ loanRoutes.get("/search-borrower", authMiddleware, lenderOnlyMiddleware, async (
   }
 
   const { getMaxBorrowingAmount } = await import("../lib/tiers")
-  const maxAmount = getMaxBorrowingAmount(borrower.borrowerTier as any)
+  const maxAmount = getMaxBorrowingAmount(borrower.borrowerTier)
 
   return c.json({
     borrower: {
@@ -209,6 +322,30 @@ loanRoutes.get("/search-borrower", authMiddleware, lenderOnlyMiddleware, async (
       maxBorrowingAmount: maxAmount,
     }
   })
+})
+
+const updateSettingsSchema = z.object({
+  reminderEnabled: z.boolean().optional(),
+  doaLunasEnabled: z.boolean().optional(),
+})
+
+loanRoutes.patch("/:id/settings", authMiddleware, lenderOnlyMiddleware, zValidator("json", updateSettingsSchema), async (c) => {
+  const user = c.get("user")
+  const id = c.req.param("id")!
+  const body = c.req.valid("json")
+
+  const [loan] = await db.select().from(loans).where(and(eq(loans.id, id), eq(loans.lenderId, user.userId)))
+  if (!loan) {
+    return c.json({ error: "Pinjaman tidak ditemukan" }, 404)
+  }
+
+  const updateData: Record<string, unknown> = { updatedAt: new Date() }
+  if (body.reminderEnabled !== undefined) updateData.reminderEnabled = body.reminderEnabled
+  if (body.doaLunasEnabled !== undefined) updateData.doaLunasEnabled = body.doaLunasEnabled
+
+  const [updatedLoan] = await db.update(loans).set(updateData).where(eq(loans.id, id)).returning()
+
+  return c.json({ loan: updatedLoan })
 })
 
 const updateStatusSchema = z.object({
@@ -245,6 +382,43 @@ loanRoutes.patch("/:id/status", authMiddleware, lenderOnlyMiddleware, zValidator
   }
 
   await db.update(loans).set(updateData).where(eq(loans.id, id))
+
+  // Generate contract PDF when activating a loan
+  if (status === "active" && !loan.contractUrl) {
+    try {
+      const [lenderUser] = await db.select({ email: users.email, displayName: users.displayName }).from(users).where(eq(users.id, user.userId))
+      const [trusteeData] = loan.trusteeId
+        ? await db.select({ name: trustees.name }).from(trustees).where(eq(trustees.id, loan.trusteeId))
+        : []
+
+      const dueDate = new Date()
+      dueDate.setMonth(dueDate.getMonth() + loan.durationMonths)
+
+      const contractUrl = await generateContractPdf({
+        loanId: loan.id,
+        lenderName: lenderUser?.displayName || lenderUser?.email || "Pemberi Pinjaman",
+        borrowerAlias: loan.borrowerAlias,
+        amount: loan.amount,
+        durationMonths: loan.durationMonths,
+        installmentType: loan.installmentType,
+        purpose: loan.purpose,
+        collateralType: loan.collateralType,
+        ujrah: loan.ujrah,
+        stampFee: loan.stampFee,
+        adminFee: loan.adminFee,
+        custodyFee: loan.custodyFee,
+        totalFee: loan.totalFee,
+        disbursedAmount: loan.disbursedAmount,
+        startDate: new Date().toISOString().split("T")[0],
+        dueDate: dueDate.toISOString().split("T")[0],
+        trusteeName: trusteeData?.name,
+      })
+
+      await db.update(loans).set({ contractUrl }).where(eq(loans.id, id))
+    } catch (err) {
+      console.error("Failed to generate contract:", err)
+    }
+  }
 
   if (status === "cancelled") {
     await db.update(installments)

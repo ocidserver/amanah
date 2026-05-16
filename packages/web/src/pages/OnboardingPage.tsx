@@ -77,7 +77,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-gray-50 px-4 py-8">
+    <div className="min-h-dvh bg-gray-50 dark:bg-slate-900 px-4 py-8">
       <div className="max-w-lg mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -86,8 +86,8 @@ export default function OnboardingPage() {
               <span className="text-white font-bold text-xl">A</span>
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Pilih Peran Anda</h1>
-          <p className="text-gray-500 mt-2 text-sm">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Pilih Peran Anda</h1>
+          <p className="text-gray-500 dark:text-slate-400 mt-2 text-sm">
             Halo {user?.displayName || "Sahabat"}, pilih peran yang sesuai dengan kebutuhan Anda.
           </p>
         </div>
@@ -102,29 +102,29 @@ export default function OnboardingPage() {
                 onClick={() => setSelectedRole(option.role)}
                 className={`w-full text-left rounded-2xl border-2 p-4 transition-all ${
                   isSelected
-                    ? "border-[var(--color-primary)] bg-white shadow-md"
-                    : "border-gray-200 bg-white hover:border-gray-300"
+                    ? "border-[var(--color-primary)] bg-white dark:bg-slate-800 shadow-md"
+                    : "border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600"
                 }`}
               >
                 <div className="flex items-start gap-4">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                    isSelected ? option.bgLight : "bg-gray-100"
+                    isSelected ? option.bgLight : "bg-gray-100 dark:bg-slate-700"
                   }`}>
                     <option.icon className={`w-6 h-6 ${isSelected ? "text-white" : option.color}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-gray-900">{option.title}</h3>
+                      <h3 className="font-bold text-gray-900 dark:text-gray-100">{option.title}</h3>
                       {isSelected && (
                         <span className="text-xs bg-[var(--color-primary)] text-white px-2 py-0.5 rounded-full">
                           Dipilih
                         </span>
                       )}
                     </div>
-                    <p className={`text-sm font-medium mt-0.5 ${isSelected ? "text-[var(--color-primary)]" : "text-gray-500"}`}>
+                    <p className={`text-sm font-medium mt-0.5 ${isSelected ? "text-[var(--color-primary)]" : "text-gray-500 dark:text-slate-400"}`}>
                       {option.subtitle}
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">{option.description}</p>
+                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{option.description}</p>
                   </div>
                 </div>
               </button>
@@ -134,7 +134,7 @@ export default function OnboardingPage() {
 
         {/* Error */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm text-center">{error}</div>
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 mb-4 text-sm text-center">{error}</div>
         )}
 
         {/* Continue Button */}
@@ -147,7 +147,7 @@ export default function OnboardingPage() {
         </button>
 
         {/* Info */}
-        <p className="text-xs text-gray-400 text-center mt-4">
+        <p className="text-xs text-gray-400 dark:text-slate-500 text-center mt-4">
           Peran dapat diubah nanti melalui pengaturan akun.
         </p>
       </div>

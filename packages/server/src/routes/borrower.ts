@@ -246,4 +246,82 @@ borrowerRoutes.get("/profile", async (c) => {
   })
 })
 
+borrowerRoutes.get("/credit-score", async (c) => {
+  const user = c.get("user")
+
+  const [dbUser] = await db.select().from(users).where(eq(users.id, user.userId))
+  if (!dbUser) {
+    return c.json({ error: "User not found" }, 404)
+  }
+
+  const allLoans = await db.select().from(loans).where(eq(loans.borrowerId, user.userId))
+  const completedLoans = allLoans.filter((l) => l.status === "completed")
+  const activeLoans = allLoans.filter((l) => l.status === "active")
+
+  const totalBorrowed = allLoans.reduce((s, l) => s + l.amount, 0)
+  const totalRepaid = completedLoans.reduce((s, l) => s + l.amount, 0)
+
+  const allInstallments = await db
+    .select({ status: installments.status, paidAt: installments.paidAt, dueDate: installments.dueDate })
+    .from(installments)
+    .innerJoin(loans, eq(installments.loanId, loans.id))
+    .where(eq(loans.borrowerId, user.userId))
+
+  const totalInstallments = allInstallments.length
+  let onTimeCount = 0
+  for (const inst of allInstallments) {
+    if (inst.status === "paid" && inst.paidAt) {
+      const dueDate = new Date(inst.dueDate)
+      const paidDate = new Date(inst.paidAt)
+      const diffDays = (paidDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)
+      if (diffDays <= 7) onTimeCount++
+    }
+  }
+  const onTimePct = totalInstallments > 0 ? Math.round((onTimeCount / totalInstallments) * 100) : 0
+
+  const currentTier = dbUser.borrowerTier ?? "baru"
+  const tierOrder: { key: string; label: string; maxAmount: number; requiredLoans: number; requiredOnTime: number }[] = [
+    { key: "baru", label: "Peminjam Baru", maxAmount: 2000000, requiredLoans: 0, requiredOnTime: 0 },
+    { key: "kecil", label: "Peminjam Kecil", maxAmount: 5000000, requiredLoans: 1, requiredOnTime: 80 },
+    { key: "menengah", label: "Peminjam Menengah", maxAmount: 15000000, requiredLoans: 3, requiredOnTime: 85 },
+    { key: "utama", label: "Peminjam Utama", maxAmount: 50000000, requiredLoans: 5, requiredOnTime: 90 },
+  ]
+
+  const currentIndex = tierOrder.findIndex((t) => t.key === currentTier)
+  const nextTier = currentIndex < tierOrder.length - 1 ? tierOrder[currentIndex + 1] : null
+
+  const tierProgress = nextTier
+    ? {
+        current: currentTier,
+        next: nextTier.key,
+        nextLabel: nextTier.label,
+        maxAmount: nextTier.maxAmount,
+        loansNeeded: Math.max(0, nextTier.requiredLoans - completedLoans.length),
+        onTimeNeeded: Math.max(0, nextTier.requiredOnTime - onTimePct),
+        progressPct: Math.min(100, Math.round(((completedLoans.length / nextTier.requiredLoans) * 50 + (onTimePct / nextTier.requiredOnTime) * 50))),
+      }
+    : { current: currentTier, next: null, nextLabel: "Tier Tertinggi", maxAmount: 50000000, loansNeeded: 0, onTimeNeeded: 0, progressPct: 100 }
+
+  return c.json({
+    currentTier,
+    currentTierLabel: tierOrder[currentIndex]?.label || "Peminjam Baru",
+    maxBorrowingAmount: tierOrder[currentIndex]?.maxAmount || 2000000,
+    totalBorrowed,
+    totalRepaid,
+    completedLoansCount: completedLoans.length,
+    activeLoansCount: activeLoans.length,
+    onTimePercentage: onTimePct,
+    totalInstallments,
+    onTimeInstallments: onTimeCount,
+    tierProgress,
+    allTiers: tierOrder.map((t, i) => ({
+      key: t.key,
+      label: t.label,
+      maxAmount: t.maxAmount,
+      isCurrent: i === currentIndex,
+      isCompleted: i < currentIndex,
+    })),
+  })
+})
+
 export default borrowerRoutes

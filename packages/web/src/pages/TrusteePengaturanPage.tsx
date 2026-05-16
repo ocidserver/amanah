@@ -14,16 +14,16 @@ function SettingItem({ icon, label, subtitle, onClick, danger }: {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-gray-50 transition-colors ${
-        danger ? "text-red-600" : "text-gray-900"
+      className={`w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-gray-50 dark:active:bg-slate-700 transition-colors ${
+        danger ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-gray-100"
       }`}
     >
-      <span className={danger ? "text-red-500" : "text-gray-400"}>{icon}</span>
+      <span className={danger ? "text-red-500 dark:text-red-400" : "text-gray-400 dark:text-slate-500"}>{icon}</span>
       <div className="flex-1 min-w-0">
         <p className="font-medium text-[15px]">{label}</p>
-        {subtitle && <p className="text-xs text-gray-400 truncate">{subtitle}</p>}
+        {subtitle && <p className="text-xs text-gray-400 dark:text-slate-500 truncate">{subtitle}</p>}
       </div>
-      <IconChevronRight className="w-4 h-4 text-gray-300" />
+      <IconChevronRight className="w-4 h-4 text-gray-300 dark:text-slate-600" />
     </button>
   )
 }
@@ -81,31 +81,31 @@ export default function TrusteePengaturanPage() {
   if (showChangePassword) {
     return (
       <div className="px-4 pt-4 pb-6">
-        <button onClick={() => { setShowChangePassword(false); setPwSuccess(false) }} className="inline-flex items-center gap-1 text-sm text-gray-500 mb-4">
+        <button onClick={() => { setShowChangePassword(false); setPwSuccess(false) }} className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-slate-400 mb-4">
           <IconChevronRight className="w-4 h-4 rotate-180" /> Kembali
         </button>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Ubah Password</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Ubah Password</h2>
         {pwSuccess ? (
           <div className="text-center py-8">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-green-50 flex items-center justify-center">
-              <IconShield className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
+              <IconShield className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
-            <p className="text-gray-900 font-semibold">Password Berhasil Diubah</p>
+            <p className="text-gray-900 dark:text-gray-100 font-semibold">Password Berhasil Diubah</p>
           </div>
         ) : (
           <form onSubmit={handleChangePassword} className="space-y-4">
-            {pwError && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">{pwError}</div>}
+            {pwError && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 text-sm">{pwError}</div>}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password Saat Ini</label>
-              <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Masukkan password saat ini" required />
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Password Saat Ini</label>
+              <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Masukkan password saat ini" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password Baru</label>
-              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Minimal 6 karakter" required minLength={6} />
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Password Baru</label>
+              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Minimal 6 karakter" required minLength={6} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password Baru</label>
-              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Ulangi password baru" required minLength={6} />
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Konfirmasi Password Baru</label>
+              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" placeholder="Ulangi password baru" required minLength={6} />
             </div>
             <button type="submit" disabled={pwLoading} className="w-full bg-[var(--color-primary)] text-white rounded-xl py-3 font-semibold disabled:opacity-50">
               {pwLoading ? "Menyimpan..." : "Ubah Password"}
@@ -119,28 +119,28 @@ export default function TrusteePengaturanPage() {
   if (showRoleChange) {
     return (
       <div className="px-4 pt-4 pb-6">
-        <button onClick={() => { setShowRoleChange(false); setRoleChangeSuccess(false); setRoleChangeError("") }} className="inline-flex items-center gap-1 text-sm text-gray-500 mb-4">
+        <button onClick={() => { setShowRoleChange(false); setRoleChangeSuccess(false); setRoleChangeError("") }} className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-slate-400 mb-4">
           <IconChevronRight className="w-4 h-4 rotate-180" /> Kembali
         </button>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Ubah Peran</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Ubah Peran</h2>
         {roleChangeSuccess ? (
           <div className="text-center py-8">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-green-50 flex items-center justify-center">
-              <IconArrowRightLeft className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
+              <IconArrowRightLeft className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
-            <p className="text-gray-900 font-semibold mb-1">Permintaan Terkirim</p>
-            <p className="text-gray-500 text-sm">Admin akan meninjau permintaan Anda.</p>
+            <p className="text-gray-900 dark:text-gray-100 font-semibold mb-1">Permintaan Terkirim</p>
+            <p className="text-gray-500 dark:text-slate-400 text-sm">Admin akan meninjau permintaan Anda.</p>
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <p className="text-sm font-medium text-blue-900">Ubah dari Wali Amanah ke Pemberi Pinjaman?</p>
-              <p className="text-xs text-blue-700 mt-1">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-400">Ubah dari Wali Amanah ke Pemberi Pinjaman?</p>
+              <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">
                 Permintaan ini akan ditinjau oleh admin. Proses bisa memakan waktu 1-2 hari kerja.
               </p>
             </div>
             {roleChangeError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">{roleChangeError}</div>
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 text-sm">{roleChangeError}</div>
             )}
             <button
               onClick={handleRoleChange}
@@ -157,25 +157,25 @@ export default function TrusteePengaturanPage() {
 
   return (
     <div className="px-4 pt-4 pb-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">Pengaturan</h2>
+      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Pengaturan</h2>
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-4">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Akun</p>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 overflow-hidden mb-4">
+        <div className="px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700">
+          <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Akun</p>
         </div>
         <SettingItem
           icon={<IconMail className="w-5 h-5" />}
           label="Email"
           subtitle={user?.email || "-"}
         />
-        <div className="h-px bg-gray-100 ml-12" />
+        <div className="h-px bg-gray-100 dark:bg-slate-700 ml-12" />
         <SettingItem
           icon={<IconShield className="w-5 h-5" />}
           label="Keamanan"
           subtitle="Ubah password"
           onClick={() => setShowChangePassword(true)}
         />
-        <div className="h-px bg-gray-100 ml-12" />
+        <div className="h-px bg-gray-100 dark:bg-slate-700 ml-12" />
         <SettingItem
           icon={<IconArrowRightLeft className="w-5 h-5" />}
           label="Ubah Peran"
@@ -186,7 +186,7 @@ export default function TrusteePengaturanPage() {
 
       <button
         onClick={handleSignOut}
-        className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 border border-red-100 rounded-2xl py-3.5 font-medium active:scale-[0.98] transition-transform"
+        className="w-full flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800 rounded-2xl py-3.5 font-medium active:scale-[0.98] transition-transform"
       >
         <IconLogOut className="w-4 h-4" />
         Keluar

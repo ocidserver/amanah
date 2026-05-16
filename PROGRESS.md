@@ -95,3 +95,37 @@
 - Responsive polish & accessibility
 - Email notification expansion
 - Admin dashboard expansion
+
+## Fase 5: Loan Lifecycle UI ✅
+
+- [x] PaymentProofsPage — dedicated page for lenders to review all payment proofs with filter tabs (Menunggu/Diterima/Ditolak), image preview, inline verify/reject
+- [x] GET /payment-proofs?status=pending|verified|rejected — server endpoint for fetching proofs with status filter
+- [x] BerandaPage badge link updated to /bukti-bayar
+- [x] Loan settings toggle UI in PinjamanDetailPage — toggle reminderEnabled and doaLunasEnabled per loan
+- [x] PATCH /loans/:id/settings — server endpoint for updating loan settings
+- [x] IconMessageCircle added to Icons.tsx
+
+## Fase 6: Production Readiness ✅
+
+- [x] Contract PDF generation — generate PDF saat loan activated via PATCH /loans/:id/status, download button di PinjamanDetailPage (lender) dan BorrowerLoanDetailPage (borrower)
+- [x] Forgot/Reset Password — sudah lengkap (server endpoints + UI + email template + rate limiting + token expiration)
+- [x] Vite allowedHosts — ditambahkan `allowedHosts: true` untuk cloudflared tunnel support
+- [x] Error handling polish — API client retry logic (2x), offline detection, user-friendly error messages, offline banner di semua layout, enhanced ErrorBoundary dengan stack trace (dev)
+- [x] Seed data script — `npm run db:seed` di server: 5 users (lender, 2 borrowers, admin, trustee), 3 loans (active, completed, pending), installments, completion message, lender rating
+- [x] Docker production config — Multi-stage builds, health checks, volume mounts untuk uploads, .dockerignore, .env.example, nginx-web.conf dengan security headers & cache static assets
+
+## Fase 7: Enhancement (In Progress)
+
+- [x] Lender dashboard analytics — GET /loans/analytics endpoint, CSS-only bar charts (no external library), repayment rate, total disbursed/returned/outstanding, monthly trend 6 bulan, purpose breakdown di BerandaPage
+- [x] Borrower credit score visual — GET /borrower/credit-score endpoint, tier progression bar, next tier requirements (loans needed + on-time %), repayment stats (completed/active/on-time%), tier badges, total borrowed + plafon display di BorrowerProfilPage
+- [x] Trustee notification system — Email notifikasi saat trustee accept/decline request, collateral returned. 3 template email baru: sendTrusteeRequestEmail, sendTrusteeResponseEmail, sendCollateralReturnedEmail
+- [x] Mobile PWA — manifest.json, service worker (cache-first strategy), PWA meta tags (apple-mobile-web-app-capable, theme-color), apple-touch-icon, install-ready
+- [x] Multi-language (i18n) — Dictionary-based i18n system (ID/EN), language toggle in ProfilPage, localStorage persistence, 60+ translation keys, IconGlobe added
+
+## Technical Debt & Bug Fixes ✅
+
+- [x] Borrower upload proof — diganti dari hardcoded fetch ke `api.upload()` client
+- [x] `as any` usage — `loans.ts:263` dan `check-admin.ts:27` diganti proper types (`isNull` dari drizzle-orm)
+- [x] File storage abstraction — `lib/storage.ts` dibuat siap untuk S3/cloud storage swap
+- [x] Rate limiting — sudah ada di semua auth endpoints (register, login, forgot/reset password)
+- [x] JWT refresh token rotation — sudah diimplementasi di `/auth/refresh` (delete old, insert new)

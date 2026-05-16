@@ -8,9 +8,8 @@ import { signAccessToken, signRefreshToken, verifyToken, hashPassword, comparePa
 import { authMiddleware, AuthEnv } from "../middleware/auth"
 import { rateLimit } from "../middleware/rate-limit"
 import { sendWelcomeEmail, sendPasswordResetEmail } from "../lib/email"
+import { validateFile, validateFileContent, saveFile } from "../lib/storage"
 import { randomBytes } from "crypto"
-import fs from "fs"
-import path from "path"
 
 const auth = new Hono<AuthEnv>()
 
@@ -186,9 +185,14 @@ auth.post("/login", authLimiter, zValidator("json", loginSchema), async (c) => {
       occupation: user.occupation,
       ktpDocumentUrl: user.ktpDocumentUrl,
       profileCompleted: user.profileCompleted,
+      isVerified: user.isVerified,
       borrowerTier: user.borrowerTier,
       lenderTier: user.lenderTier,
       rating: user.rating,
+      ratingCount: user.ratingCount,
+      onTimePercentage: user.onTimePercentage,
+      completedLoans: user.completedLoans,
+      createdAt: user.createdAt,
     },
   })
 })
@@ -223,11 +227,6 @@ auth.get("/me", authMiddleware, async (c) => {
   })
 })
 
-const UPLOADS_DIR = path.join(process.cwd(), "uploads", "ktp")
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true })
-}
-
 auth.post("/upload-ktp", authMiddleware, async (c) => {
   const user = c.get("user")
 
@@ -238,23 +237,17 @@ auth.post("/upload-ktp", authMiddleware, async (c) => {
     return c.json({ error: "File gambar wajib diupload" }, 400)
   }
 
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"]
-  if (!allowedTypes.includes(file.type)) {
-    return c.json({ error: "Format file harus JPG, PNG, atau WebP" }, 400)
+  const validation = validateFile("ktp", file)
+  if (!validation.valid) {
+    return c.json({ error: validation.error }, 400)
   }
 
-  if (file.size > 5 * 1024 * 1024) {
-    return c.json({ error: "Ukuran file maksimal 5MB" }, 400)
+  const contentValidation = await validateFileContent(file)
+  if (!contentValidation.valid) {
+    return c.json({ error: contentValidation.error }, 400)
   }
 
-  const ext = (file.name as string).split(".").pop() || "jpg"
-  const filename = `ktp-${user.userId}-${Date.now()}.${ext}`
-  const filepath = path.join(UPLOADS_DIR, filename)
-
-  const buffer = Buffer.from(await file.arrayBuffer())
-  fs.writeFileSync(filepath, buffer)
-
-  const ktpUrl = `/uploads/ktp/${filename}`
+  const ktpUrl = await saveFile("ktp", file, `ktp-${user.userId}`)
 
   await db
     .update(users)

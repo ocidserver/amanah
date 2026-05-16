@@ -56,6 +56,7 @@ export interface IUser {
 
 export interface ILoan {
   id: string
+  loanCode: string | null
   lenderId: string | null
   borrowerId: string | null
   borrowerAlias: string
@@ -66,6 +67,7 @@ export interface ILoan {
   purpose: LoanPurpose
   collateralType: CollateralType
   collateralDescription: string | null
+  collateralProofUrl: string | null
   collateralStatus: CollateralStatus
   notesEncrypted: string | null
   applicationNote: string | null

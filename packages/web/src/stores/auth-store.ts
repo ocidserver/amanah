@@ -17,6 +17,9 @@ interface IUser {
   borrowerTier: string | null
   lenderTier: string | null
   rating: string | null
+  ratingCount: number
+  onTimePercentage: string | null
+  completedLoans: number
 }
 
 interface IAuthState {
@@ -98,16 +101,18 @@ export const useAuthStore = create<IAuthState>((set, get) => ({
   restoreSession: async () => {
     const token = await getAccessToken()
     if (token) {
-      set({ accessToken: token, isAuthenticated: true, isLoading: false })
-      get().fetchProfile()
+      set({ accessToken: token, isAuthenticated: true })
+      await get().fetchProfile()
+      set({ isLoading: false })
     } else {
       const refreshToken = localStorage.getItem("auth_refresh_token")
       if (refreshToken) {
         try {
           const data = await api.post<{ accessToken: string; refreshToken: string }>("/auth/refresh", { refreshToken })
           await setTokens(data.accessToken, data.refreshToken)
-          set({ accessToken: data.accessToken, isAuthenticated: true, isLoading: false })
-          get().fetchProfile()
+          set({ accessToken: data.accessToken, isAuthenticated: true })
+          await get().fetchProfile()
+          set({ isLoading: false })
         } catch {
           await clearTokens()
           set({ accessToken: null, user: null, isAuthenticated: false, isLoading: false })
@@ -122,7 +127,11 @@ export const useAuthStore = create<IAuthState>((set, get) => ({
     try {
       const profile = await api.get<IUser>("/auth/me")
       set({ user: profile })
-    } catch {}
+    } catch (err) {
+      console.error("Failed to fetch profile:", err)
+      await clearTokens()
+      set({ user: null, isAuthenticated: false, isLoading: false })
+    }
   },
 
   updateProfile: async (displayName: string) => {

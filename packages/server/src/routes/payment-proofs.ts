@@ -7,19 +7,85 @@ import { installments, paymentProofs, loans, users } from "../db/schema"
 import { authMiddleware, AuthEnv } from "../middleware/auth"
 import { checkAndCompleteLoan } from "../lib/loan-helpers"
 import { sendPaymentConfirmedEmail, sendPaymentRejectedEmail } from "../lib/email"
-import { serve } from "@hono/node-server"
-import fs from "fs"
-import path from "path"
+import { validateFile, validateFileContent, saveFile, deleteFile } from "../lib/storage"
 
 const proofRoutes = new Hono<AuthEnv>()
 
 proofRoutes.use("/*", authMiddleware)
 
-// Ensure uploads directory exists
-const UPLOADS_DIR = path.join(process.cwd(), "uploads", "proofs")
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true })
-}
+// GET /payment-proofs - Get all payment proofs for lender's loans (with optional status filter)
+proofRoutes.get("/", async (c) => {
+  const user = c.get("user")
+  const status = c.req.query("status") as "pending" | "verified" | "rejected" | undefined
+
+  const whereClause = status
+    ? and(eq(paymentProofs.status, status), eq(loans.lenderId, user.userId))
+    : eq(loans.lenderId, user.userId)
+
+  const allProofs = await db
+    .select({
+      id: paymentProofs.id,
+      installmentId: paymentProofs.installmentId,
+      imageUrl: paymentProofs.imageUrl,
+      status: paymentProofs.status,
+      uploadedAt: paymentProofs.uploadedAt,
+      verifiedAt: paymentProofs.verifiedAt,
+      installment: {
+        id: installments.id,
+        periodLabel: installments.periodLabel,
+        amount: installments.amount,
+        dueDate: installments.dueDate,
+        status: installments.status,
+      },
+      loan: {
+        id: loans.id,
+        loanCode: loans.id,
+        borrowerAlias: loans.borrowerAlias,
+        lenderId: loans.lenderId,
+      },
+    })
+    .from(paymentProofs)
+    .innerJoin(installments, eq(paymentProofs.installmentId, installments.id))
+    .innerJoin(loans, eq(installments.loanId, loans.id))
+    .where(whereClause)
+    .orderBy(paymentProofs.uploadedAt)
+
+  return c.json({ proofs: allProofs, count: allProofs.length })
+})
+
+// GET /payment-proofs/pending - Get pending payment proofs for lender's loans
+proofRoutes.get("/pending", async (c) => {
+  const user = c.get("user")
+
+  const pendingProofs = await db
+    .select({
+      id: paymentProofs.id,
+      installmentId: paymentProofs.installmentId,
+      imageUrl: paymentProofs.imageUrl,
+      status: paymentProofs.status,
+      uploadedAt: paymentProofs.uploadedAt,
+      installment: {
+        id: installments.id,
+        periodLabel: installments.periodLabel,
+        amount: installments.amount,
+        dueDate: installments.dueDate,
+        status: installments.status,
+      },
+      loan: {
+        id: loans.id,
+        loanCode: loans.id,
+        borrowerAlias: loans.borrowerAlias,
+        lenderId: loans.lenderId,
+      },
+    })
+    .from(paymentProofs)
+    .innerJoin(installments, eq(paymentProofs.installmentId, installments.id))
+    .innerJoin(loans, eq(installments.loanId, loans.id))
+    .where(and(eq(paymentProofs.status, "pending"), eq(loans.lenderId, user.userId)))
+    .orderBy(paymentProofs.uploadedAt)
+
+  return c.json({ pendingProofs, count: pendingProofs.length })
+})
 
 proofRoutes.post("/installments/:id/upload", async (c) => {
   const user = c.get("user")
@@ -35,7 +101,6 @@ proofRoutes.post("/installments/:id/upload", async (c) => {
     return c.json({ error: "Tidak memiliki akses" }, 403)
   }
 
-  // Allow re-upload if previous proof was rejected
   const [existing] = await db.select().from(paymentProofs).where(eq(paymentProofs.installmentId, id)).catch(() => [])
   if (existing && existing.status !== "rejected") {
     return c.json({ error: "Bukti transfer sudah diupload untuk cicilan ini" }, 409)
@@ -48,32 +113,20 @@ proofRoutes.post("/installments/:id/upload", async (c) => {
     return c.json({ error: "File gambar wajib diupload" }, 400)
   }
 
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"]
-  if (!allowedTypes.includes(file.type)) {
-    return c.json({ error: "Format file harus JPG, PNG, atau WebP" }, 400)
+  const validation = validateFile("proofs", file)
+  if (!validation.valid) {
+    return c.json({ error: validation.error }, 400)
   }
 
-  if (file.size > 5 * 1024 * 1024) {
-    return c.json({ error: "Ukuran file maksimal 5MB" }, 400)
+  const contentValidation = await validateFileContent(file)
+  if (!contentValidation.valid) {
+    return c.json({ error: contentValidation.error }, 400)
   }
 
-  const ext = (file.name as string).split(".").pop() || "jpg"
-  const filename = `proof-${id}-${Date.now()}.${ext}`
-  const filePath = path.join(UPLOADS_DIR, filename)
-  const imageUrl = `/uploads/proofs/${filename}`
+  const imageUrl = await saveFile("proofs", file, `proof-${id}`)
 
-  // Read file as ArrayBuffer and write to disk
-  const arrayBuffer = await file.arrayBuffer()
-  const buffer = Buffer.from(arrayBuffer)
-  await fs.promises.writeFile(filePath, buffer)
-
-  // If re-uploading after rejection, delete old file and update record
   if (existing && existing.status === "rejected") {
-    // Delete old file if exists
-    const oldPath = path.join(process.cwd(), existing.imageUrl.replace(/^\//, ""))
-    if (fs.existsSync(oldPath)) {
-      await fs.promises.unlink(oldPath).catch(() => {})
-    }
+    await deleteFile(existing.imageUrl)
     const [updatedProof] = await db
       .update(paymentProofs)
       .set({ imageUrl, status: "pending", verifiedBy: null, verifiedAt: null })

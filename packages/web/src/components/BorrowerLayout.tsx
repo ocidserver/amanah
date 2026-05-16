@@ -1,5 +1,6 @@
 import { Outlet, NavLink, Navigate } from "react-router-dom"
 import { useAuth } from "../hooks/use-auth"
+import { useNetworkStatus } from "../hooks/use-network-status"
 import { IconWallet, IconUser } from "./Icons"
 
 const navItems = [
@@ -9,6 +10,7 @@ const navItems = [
 
 export default function BorrowerLayout() {
   const { isLender } = useAuth()
+  const isOnline = useNetworkStatus()
 
   if (isLender) {
     return <Navigate to="/dashboard" replace />
@@ -16,6 +18,11 @@ export default function BorrowerLayout() {
 
   return (
     <div className="min-h-dvh bg-gray-50 flex flex-col">
+      {!isOnline && (
+        <div className="bg-amber-500 text-white text-center text-xs py-1.5 font-medium sticky top-0 z-50">
+          Tidak ada koneksi internet
+        </div>
+      )}
       <header className="bg-[var(--color-primary)] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 safe-top">
         <h1 className="text-lg font-bold tracking-wide">Amanah</h1>
         <span className="text-xs opacity-70">Peminjam</span>

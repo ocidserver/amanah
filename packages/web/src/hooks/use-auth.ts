@@ -18,7 +18,8 @@ export function useAuth() {
   const isLender = user?.role === "lender"
   const isBorrower = user?.role === "borrower"
   const isTrustee = user?.role === "trustee"
+  const isAdmin = user?.role === "admin"
   const hasNoRole = !user?.role
 
-  return { accessToken, user, isLoading, isAuthenticated, register, login, setRole, signOut, restoreSession, fetchProfile, updateProfile, uploadKtp, isLender, isBorrower, isTrustee, hasNoRole }
+  return { accessToken, user, isLoading, isAuthenticated, register, login, setRole, signOut, restoreSession, fetchProfile, updateProfile, uploadKtp, isLender, isBorrower, isTrustee, isAdmin, hasNoRole }
 }

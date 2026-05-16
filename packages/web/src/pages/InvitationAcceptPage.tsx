@@ -57,8 +57,8 @@ export default function InvitationAcceptPage() {
 
   if (!data?.invitation) {
     return (
-      <div className="min-h-dvh bg-white px-4 pt-4 text-center">
-        <p className="text-gray-400 py-8">Undangan tidak ditemukan atau sudah kadaluarsa.</p>
+      <div className="min-h-dvh bg-white dark:bg-slate-800 px-4 pt-4 text-center">
+        <p className="text-gray-400 dark:text-slate-500 py-8">Undangan tidak ditemukan atau sudah kadaluarsa.</p>
         <Link to="/" className="text-[var(--color-primary)] text-sm font-medium">Kembali ke Beranda</Link>
       </div>
     )
@@ -68,41 +68,41 @@ export default function InvitationAcceptPage() {
   const purposeLabel = LOAN_PURPOSE[loan.purpose as keyof typeof LOAN_PURPOSE] || loan.purpose
 
   return (
-    <div className="min-h-dvh bg-white px-4 py-8">
+    <div className="min-h-dvh bg-white dark:bg-slate-800 px-4 py-8">
       <div className="max-w-sm mx-auto">
         <div className="text-center mb-8">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--color-primary)] bg-opacity-10 flex items-center justify-center">
             <span className="text-3xl">🤝</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Undangan Pinjaman</h1>
-          <p className="text-gray-500 mt-1 text-sm">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Undangan Pinjaman</h1>
+          <p className="text-gray-500 dark:text-slate-400 mt-1 text-sm">
             {lender?.displayName || "Pemberi Pinjaman"} mengundang Anda
           </p>
         </div>
 
-        <div className="bg-gray-50 rounded-2xl p-5 mb-6">
+        <div className="bg-gray-50 dark:bg-slate-700 rounded-2xl p-5 mb-6">
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
-              <p className="text-gray-500">Nominal</p>
-              <p className="font-semibold text-gray-900">{formatCurrency(loan.amount)}</p>
+              <p className="text-gray-500 dark:text-slate-400">Nominal</p>
+              <p className="font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(loan.amount)}</p>
             </div>
             <div>
-              <p className="text-gray-500">Durasi</p>
-              <p className="font-semibold text-gray-900">{loan.durationMonths} bulan</p>
+              <p className="text-gray-500 dark:text-slate-400">Durasi</p>
+              <p className="font-semibold text-gray-900 dark:text-gray-100">{loan.durationMonths} bulan</p>
             </div>
             <div>
-              <p className="text-gray-500">Tujuan</p>
-              <p className="font-semibold text-gray-900">{purposeLabel}</p>
+              <p className="text-gray-500 dark:text-slate-400">Tujuan</p>
+              <p className="font-semibold text-gray-900 dark:text-gray-100">{purposeLabel}</p>
             </div>
             <div>
-              <p className="text-gray-500">Alias</p>
-              <p className="font-semibold text-gray-900">{loan.borrowerAlias}</p>
+              <p className="text-gray-500 dark:text-slate-400">Alias</p>
+              <p className="font-semibold text-gray-900 dark:text-gray-100">{loan.borrowerAlias}</p>
             </div>
           </div>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm">{error}</div>
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 mb-4 text-sm">{error}</div>
         )}
 
         {!isAuthenticated ? (
@@ -116,7 +116,7 @@ export default function InvitationAcceptPage() {
             </Link>
             <Link
               to={`/login`}
-              className="block w-full border border-gray-200 text-gray-700 rounded-xl py-3 font-semibold text-base text-center active:scale-[0.98] transition-transform"
+              className="block w-full border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-xl py-3 font-semibold text-base text-center active:scale-[0.98] transition-transform"
             >
               Sudah Punya Akun
             </Link>
@@ -131,7 +131,7 @@ export default function InvitationAcceptPage() {
           </button>
         )}
 
-        <p className="text-center text-xs text-gray-400 mt-6">
+        <p className="text-center text-xs text-gray-400 dark:text-slate-500 mt-6">
           Undangan berlaku hingga {new Date(invitation.expiresAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
         </p>
       </div>

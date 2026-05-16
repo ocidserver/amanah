@@ -26,7 +26,7 @@ export default function PinjamanPage() {
   return (
     <div className="px-4 pt-4 pb-4">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900">Pinjaman</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Pinjaman</h2>
         <Link
           to="/pinjaman/baru"
           className="inline-flex items-center gap-1 bg-[var(--color-primary)] text-white px-3.5 py-2 rounded-xl text-sm font-medium active:scale-[0.98] transition-transform"
@@ -39,15 +39,15 @@ export default function PinjamanPage() {
       {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-4 animate-pulse h-24" />
+            <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-4 animate-pulse h-24" />
           ))}
         </div>
       ) : loans.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
-          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-50 flex items-center justify-center">
-            <IconLoan className="w-6 h-6 text-gray-300" />
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-8 text-center">
+          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-50 dark:bg-slate-700 flex items-center justify-center">
+            <IconLoan className="w-6 h-6 text-gray-300 dark:text-slate-500" />
           </div>
-          <p className="text-gray-400">Belum ada pinjaman aktif</p>
+          <p className="text-gray-400 dark:text-slate-400">Belum ada pinjaman aktif</p>
           <Link
             to="/pinjaman/baru"
             className="inline-flex items-center gap-1 mt-3 text-[var(--color-primary)] font-medium text-sm"
@@ -62,22 +62,22 @@ export default function PinjamanPage() {
             <Link
               key={loan.id}
               to={`/pinjaman/${loan.id}`}
-              className="block bg-white rounded-2xl border border-gray-100 p-4 active:scale-[0.99] transition-transform"
+              className="block bg-white dark:bg-slate-800 dark:border-slate-700 rounded-2xl border border-gray-100 p-4 active:scale-[0.99] transition-transform"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <p className="font-semibold text-gray-900 truncate">{loan.borrowerAlias}</p>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">{loan.borrowerAlias}</p>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${
-                      loan.status === "active" ? "bg-green-50 text-green-700" :
-                      loan.status === "completed" ? "bg-blue-50 text-blue-700" :
-                      "bg-gray-50 text-gray-600"
+                      loan.status === "active" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400" :
+                      loan.status === "completed" ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400" :
+                      "bg-gray-50 dark:bg-slate-700 text-gray-600 dark:text-slate-400"
                     }`}>
                       {loan.status === "active" ? "Aktif" : loan.status === "completed" ? "Lunas" : loan.status}
                     </span>
                   </div>
-                  <p className="text-lg font-bold text-gray-900">{formatCurrency(loan.amount)}</p>
-                  <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
+                  <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatCurrency(loan.amount)}</p>
+                  <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-slate-500 mt-1">
                     <span>{LOAN_PURPOSE[loan.purpose as keyof typeof LOAN_PURPOSE] || loan.purpose}</span>
                     <span className="flex items-center gap-0.5">
                       <IconClock className="w-3 h-3" />
@@ -85,7 +85,7 @@ export default function PinjamanPage() {
                     </span>
                   </div>
                 </div>
-                <IconChevronRight className="w-5 h-5 text-gray-300 shrink-0" />
+                <IconChevronRight className="w-5 h-5 text-gray-300 dark:text-slate-600 shrink-0" />
               </div>
             </Link>
           ))}
