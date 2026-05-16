@@ -9,5 +9,8 @@
     "dev:server": "npm run dev --workspace=@amanah/server",
     "dev:web": "npm run dev --workspace=@amanah/web",
     "build:web": "npm run build --workspace=@amanah/web"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2"
   }
 }

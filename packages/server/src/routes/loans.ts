@@ -9,7 +9,8 @@ import { generateContractPdf } from "../lib/contract"
 import { authMiddleware, AuthEnv } from "../middleware/auth"
 import { lenderOnlyMiddleware } from "../middleware/role"
 import { checkBorrowingLimit } from "../lib/tiers"
-import { sendLoanInvitationEmail, sendLoanCreatedEmail } from "../lib/email"
+import { sendLoanInvitationEmail, sendLoanCreatedEmail, sendContractGeneratedEmail } from "../lib/email"
+import { sendPushNotification } from "../lib/push"
 
 const loanRoutes = new Hono<AuthEnv>()
 
@@ -396,6 +397,7 @@ loanRoutes.patch("/:id/status", authMiddleware, lenderOnlyMiddleware, zValidator
 
       const contractUrl = await generateContractPdf({
         loanId: loan.id,
+        loanCode: loan.loanCode || loan.id,
         lenderName: lenderUser?.displayName || lenderUser?.email || "Pemberi Pinjaman",
         borrowerAlias: loan.borrowerAlias,
         amount: loan.amount,
@@ -415,6 +417,8 @@ loanRoutes.patch("/:id/status", authMiddleware, lenderOnlyMiddleware, zValidator
       })
 
       await db.update(loans).set({ contractUrl }).where(eq(loans.id, id))
+
+      sendContractGeneratedEmail(lenderUser?.email || "", lenderUser?.displayName, loan.loanCode || loan.id, loan.borrowerAlias, loan.amount).catch(() => {})
     } catch (err) {
       console.error("Failed to generate contract:", err)
     }
@@ -424,6 +428,56 @@ loanRoutes.patch("/:id/status", authMiddleware, lenderOnlyMiddleware, zValidator
     await db.update(installments)
       .set({ status: "unpaid" })
       .where(and(eq(installments.loanId, id), eq(installments.status, "unpaid")))
+
+    if (loan.borrowerId) {
+      sendPushNotification(loan.borrowerId, {
+        title: "Pinjaman Dibatalkan",
+        body: `Pinjaman ${loan.loanCode} telah dibatalkan oleh pemberi pinjaman.`,
+        icon: "/icons/icon-192.png",
+        tag: `loan-cancelled-${id}`,
+        data: { url: `/borrower/loans/${id}` },
+      }).catch(() => {})
+    }
+  } else if (status === "defaulted") {
+    if (loan.borrowerId) {
+      sendPushNotification(loan.borrowerId, {
+        title: "Pinjaman Gagal Bayar",
+        body: `Pinjaman ${loan.loanCode} ditandai sebagai gagal bayar.`,
+        icon: "/icons/icon-192.png",
+        tag: `loan-defaulted-${id}`,
+        data: { url: `/borrower/loans/${id}` },
+      }).catch(() => {})
+    }
+  } else if (status === "active") {
+    if (loan.borrowerId) {
+      sendPushNotification(loan.borrowerId, {
+        title: "Pinjaman Diaktifkan",
+        body: `Pinjaman ${loan.loanCode} telah diaktifkan. Silakan cek detail pinjaman Anda.`,
+        icon: "/icons/icon-192.png",
+        tag: `loan-activated-${id}`,
+        data: { url: `/borrower/loans/${id}` },
+      }).catch(() => {})
+    }
+  } else if (status === "approved") {
+    if (loan.borrowerId) {
+      sendPushNotification(loan.borrowerId, {
+        title: "Pinjaman Disetujui",
+        body: `Pinjaman ${loan.loanCode} telah disetujui. Menunggu aktivasi.`,
+        icon: "/icons/icon-192.png",
+        tag: `loan-approved-${id}`,
+        data: { url: `/borrower/loans/${id}` },
+      }).catch(() => {})
+    }
+  } else if (status === "rejected") {
+    if (loan.borrowerId) {
+      sendPushNotification(loan.borrowerId, {
+        title: "Pinjaman Ditolak",
+        body: `Pinjaman ${loan.loanCode} tidak dapat disetujui.`,
+        icon: "/icons/icon-192.png",
+        tag: `loan-rejected-${id}`,
+        data: { url: `/borrower/loans/${id}` },
+      }).catch(() => {})
+    }
   }
 
   const [updatedLoan] = await db.select().from(loans).where(eq(loans.id, id))

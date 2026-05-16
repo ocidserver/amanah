@@ -129,3 +129,49 @@
 - [x] File storage abstraction — `lib/storage.ts` dibuat siap untuk S3/cloud storage swap
 - [x] Rate limiting — sudah ada di semua auth endpoints (register, login, forgot/reset password)
 - [x] JWT refresh token rotation — sudah diimplementasi di `/auth/refresh` (delete old, insert new)
+
+## Fase 9: Offline & Bulk Operations ✅
+
+- [x] Offline mode polish — React Query persist to localStorage via `@tanstack/react-query-persist-client`, API client localStorage cache fallback (5 min TTL), stale data display when offline, `gcTime: 24h`, `refetchOnWindowFocus: false`
+- [x] Password strength meter — Added to ProfilPage change password form with 4-bar visual indicator, strength label (Lemah/Cukup/Kuat/Sangat Kuat), password match confirmation
+- [x] Export data — CSV export button on PinjamanPage with loan code, borrower alias, amount, purpose, duration, status, date, collateral type
+- [x] Bulk operations — Checkbox select all/individual on AdminRoleChangesPage, bulk approve/reject with confirmation, export CSV for role change requests, responsive column hiding
+
+## Fase 10: Two-Factor Authentication ✅
+
+- [x] Server-side TOTP — `otpauth` library, `lib/totp.ts` utility (generateSecret, generateUri, verifyToken)
+- [x] Auth endpoints — `/auth/2fa/setup`, `/auth/2fa/enable`, `/auth/2fa/disable`, `/auth/verify-2fa`, `/auth/2fa/status`
+- [x] Login flow — Returns `{ twoFactorRequired: true, userId, user }` when admin has 2FA enabled
+- [x] Client-side 2FA — `AdminTwoFactorSetupPage.tsx` (setup, verify, success, disable states), QR code via external API, secret key display
+- [x] Auth store — `verify2fa` action, `twoFactorRequired` handling in login
+- [x] useAuth hook — Exposes `verify2fa` for components
+- [x] Admin navigation — 2FA link in AdminLayout sidebar nav with IconShield, i18n translations (ID: "Autentikasi 2FA", EN: "2FA Authentication")
+- [x] Route — `/admin/2fa` added to App.tsx routes
+
+## Fase 11: Push Notifications ✅
+
+- [x] Server web-push — `web-push` library installed, VAPID keys via env vars (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`)
+- [x] Push utility — `lib/push.ts` with `sendPushNotification(userId, payload)` and `sendPushToMultiple(userIds, payload)`, auto-cleanup expired subscriptions (410/404)
+- [x] DB schema — `push_subscriptions` table (user_id, endpoint, p256dh, auth, created_at) with indexes
+- [x] Push routes — `POST /push/subscribe`, `POST /push/unsubscribe`, `GET /push/public-key`, `POST /push/test` (all auth-protected)
+- [x] Service worker — `sw.js` updated with push event handler (JSON payload parsing, notification display), notificationclick handler (opens URL or focuses existing window)
+- [x] Client hook — `usePushNotification()` with subscribe/unsubscribe/test, permission request, `urlBase64ToUint8Array` helper, subscription state management
+- [x] Settings UI — Push notification toggle in PengaturanPage with IconBell, status indicator, test notification button, error display
+- [x] Cron integration — Payment reminder push notifications (H-3 and H-0) sent to both borrower and lender alongside email
+- [x] Payment proof push — Verified notification to borrower + lender, rejected notification to borrower with upload prompt
+- [x] Loan status push — Approved, activated, cancelled, defaulted notifications to borrower with deep links
+- [x] Migration — `drizzle-kit generate` created migration for `push_subscriptions` table
+
+## Fase 12: Email Verification Flow ✅
+
+- [x] DB schema — `email_verification_tokens` table (user_id, token, expires_at, used_at, created_at) with indexes
+- [x] Server endpoints — `GET /auth/verify-email?token=xxx` (verifies token, sets isVerified=true), `POST /auth/resend-verification` (sends new verification email)
+- [x] Registration flow — Creates verification token, sends verification email via `sendEmailVerification()`, returns `emailVerificationRequired: true` flag
+- [x] Login flow — Checks `user.isVerified`, returns `emailVerificationRequired: true` if unverified, throws error on client
+- [x] Web page — `VerifyEmailPage.tsx` with 4 states: verifying (loading), success (green check), error (red X), resend (email input form)
+- [x] Route — `/verify-email` added to App.tsx as public route
+- [x] SignUpPage — After registration, redirects to `/verify-email?email=xxx` instead of `/onboarding`
+- [x] LoginPage — Catches "Email belum diverifikasi" error, redirects to `/verify-email?email=xxx`
+- [x] Auth store — `register()` returns `{ emailVerificationRequired, email }`, `login()` throws error for unverified users
+- [x] Email template — `[AMANAH app] Verifikasi Email` with 24-hour expiration, branded header/footer
+- [x] Test — Verified end-to-end: user created → email sent → token verified → isVerified=true

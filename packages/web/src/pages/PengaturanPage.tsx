@@ -2,8 +2,9 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/use-auth"
 import { useThemeStore } from "../stores/theme-store"
+import { usePushNotification } from "../hooks/use-push-notification"
 import { api } from "../lib/api"
-import { IconLogOut, IconChevronRight, IconShield, IconMail, IconArrowRightLeft, IconMoon, IconSun } from "../components/Icons"
+import { IconLogOut, IconChevronRight, IconShield, IconMail, IconArrowRightLeft, IconMoon, IconSun, IconBell } from "../components/Icons"
 
 function SettingItem({ icon, label, subtitle, onClick, danger }: {
   icon: React.ReactNode
@@ -32,6 +33,7 @@ function SettingItem({ icon, label, subtitle, onClick, danger }: {
 export default function PengaturanPage() {
   const { signOut, user } = useAuth()
   const { isDark, toggle } = useThemeStore()
+  const { isSupported, isSubscribed, isLoading: pushLoading, error: pushError, subscribe, unsubscribe, sendTest } = usePushNotification()
   const navigate = useNavigate()
   const [showChangePassword, setShowChangePassword] = useState(false)
   const [currentPassword, setCurrentPassword] = useState("")
@@ -214,6 +216,59 @@ export default function PengaturanPage() {
           </button>
         </div>
       </div>
+
+      {/* Notifications */}
+      {isSupported && (
+        <div className="bg-white dark:bg-slate-800 dark:border-slate-700 rounded-2xl border border-gray-100 overflow-hidden mb-4">
+          <div className="px-4 py-3 bg-gray-50 dark:bg-slate-800/50 dark:border-slate-700 border-b border-gray-100">
+            <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Notifikasi</p>
+          </div>
+          <div className="flex items-center gap-3 px-4 py-3.5">
+            <IconBell className={`w-5 h-5 ${isSubscribed ? "text-[var(--color-primary)]" : "text-gray-400 dark:text-slate-500"}`} />
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-[15px] text-gray-900 dark:text-gray-100">Push Notification</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500">{isSubscribed ? "Aktif" : "Nonaktif"}</p>
+            </div>
+            <button
+              onClick={isSubscribed ? unsubscribe : subscribe}
+              disabled={pushLoading}
+              className={`relative w-11 h-6 rounded-full transition-colors disabled:opacity-50 ${
+                isSubscribed ? "bg-[var(--color-primary)]" : "bg-gray-300"
+              }`}
+              role="switch"
+              aria-checked={isSubscribed}
+              aria-label="Toggle push notification"
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                  isSubscribed ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+          {isSubscribed && (
+            <>
+              <div className="h-px bg-gray-100 dark:bg-slate-700" />
+              <button
+                onClick={sendTest}
+                disabled={pushLoading}
+                className="w-full flex items-center gap-3 px-4 py-3.5 text-left text-gray-900 dark:text-gray-100 active:bg-gray-50 dark:active:bg-slate-700 transition-colors disabled:opacity-50"
+              >
+                <IconBell className="w-5 h-5 text-gray-400 dark:text-slate-500" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-[15px]">Kirim Test Notifikasi</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500">Pastikan notifikasi berfungsi</p>
+                </div>
+              </button>
+            </>
+          )}
+          {pushError && (
+            <div className="px-4 py-3 bg-red-50 dark:bg-red-900/20 border-t border-red-200 dark:border-red-800">
+              <p className="text-xs text-red-600 dark:text-red-400">{pushError}</p>
+            </div>
+          )}
+        </div>
+      )}
 
       <button
         onClick={handleSignOut}

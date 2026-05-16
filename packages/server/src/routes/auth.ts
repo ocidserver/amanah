@@ -1,15 +1,16 @@
 import { Hono } from "hono"
-import { eq, and, gt } from "drizzle-orm"
+import { eq, and, gt, isNull } from "drizzle-orm"
 import { zValidator } from "@hono/zod-validator"
 import { z } from "zod"
 import { db } from "../db"
-import { users, refreshTokens, roleChangeRequests, passwordResetTokens } from "../db/schema"
+import { users, refreshTokens, roleChangeRequests, passwordResetTokens, emailVerificationTokens } from "../db/schema"
 import { signAccessToken, signRefreshToken, verifyToken, hashPassword, comparePassword } from "../lib/auth"
 import { authMiddleware, AuthEnv } from "../middleware/auth"
 import { rateLimit } from "../middleware/rate-limit"
-import { sendWelcomeEmail, sendPasswordResetEmail } from "../lib/email"
+import { sendWelcomeEmail, sendPasswordResetEmail, sendContractGeneratedEmail, sendEmailVerification } from "../lib/email"
 import { validateFile, validateFileContent, saveFile } from "../lib/storage"
 import { randomBytes } from "crypto"
+import { generateTotpSecret, verifyTotpToken } from "../lib/totp"
 
 const auth = new Hono<AuthEnv>()
 
@@ -85,12 +86,22 @@ auth.post("/register", authLimiter, zValidator("json", registerSchema), async (c
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
   })
 
-  sendWelcomeEmail(newUser.email, newUser.displayName).catch(() => {})
+  const verificationToken = randomBytes(32).toString("hex")
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+  await db.insert(emailVerificationTokens).values({
+    userId: newUser.id,
+    token: verificationToken,
+    expiresAt,
+  })
+
+  const appUrl = process.env.APP_URL ?? "https://amanah.app"
+  sendEmailVerification(newUser.email, newUser.displayName, `${appUrl}/verify-email?token=${verificationToken}`).catch(() => {})
 
   return c.json(
     {
       accessToken,
       refreshToken,
+      emailVerificationRequired: true,
       user: {
         id: newUser.id,
         email: newUser.email,
@@ -161,6 +172,32 @@ auth.post("/login", authLimiter, zValidator("json", loginSchema), async (c) => {
     return c.json({ error: "Email atau password salah" }, 401)
   }
 
+  if (user.role === "admin" && user.twoFactorEnabled && user.totpSecret) {
+    return c.json({
+      twoFactorRequired: true,
+      userId: user.id,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        displayName: user.displayName,
+      },
+    })
+  }
+
+  if (!user.isVerified) {
+    return c.json({
+      emailVerificationRequired: true,
+      userId: user.id,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        displayName: user.displayName,
+      },
+    })
+  }
+
   const payload = { userId: user.id, role: user.role ?? "pending" }
   const accessToken = signAccessToken(payload)
   const refreshToken = signRefreshToken(payload)
@@ -194,6 +231,198 @@ auth.post("/login", authLimiter, zValidator("json", loginSchema), async (c) => {
       completedLoans: user.completedLoans,
       createdAt: user.createdAt,
     },
+  })
+})
+
+auth.get("/verify-email", zValidator("query", z.object({ token: z.string() })), async (c) => {
+  const { token } = c.req.valid("query")
+
+  const [verificationToken] = await db
+    .select()
+    .from(emailVerificationTokens)
+    .where(and(eq(emailVerificationTokens.token, token), gt(emailVerificationTokens.expiresAt, new Date()), isNull(emailVerificationTokens.usedAt)))
+
+  if (!verificationToken) {
+    return c.json({ error: "Token verifikasi tidak valid atau sudah kedaluwarsa" }, 400)
+  }
+
+  await db
+    .update(users)
+    .set({ isVerified: true })
+    .where(eq(users.id, verificationToken.userId))
+
+  await db
+    .update(emailVerificationTokens)
+    .set({ usedAt: new Date() })
+    .where(eq(emailVerificationTokens.id, verificationToken.id))
+
+  const [user] = await db.select().from(users).where(eq(users.id, verificationToken.userId))
+
+  return c.json({
+    success: true,
+    message: "Email berhasil diverifikasi",
+    user: {
+      id: user.id,
+      email: user.email,
+      isVerified: user.isVerified,
+    },
+  })
+})
+
+auth.post("/resend-verification", authLimiter, zValidator("json", z.object({ email: z.string().email() })), async (c) => {
+  const { email: rawEmail } = c.req.valid("json")
+  const email = rawEmail.toLowerCase()
+
+  const [user] = await db.select().from(users).where(eq(users.email, email))
+  if (!user) {
+    return c.json({ error: "Email tidak ditemukan" }, 404)
+  }
+
+  if (user.isVerified) {
+    return c.json({ error: "Email sudah diverifikasi" }, 400)
+  }
+
+  const verificationToken = randomBytes(32).toString("hex")
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+
+  await db
+    .delete(emailVerificationTokens)
+    .where(eq(emailVerificationTokens.userId, user.id))
+
+  await db.insert(emailVerificationTokens).values({
+    userId: user.id,
+    token: verificationToken,
+    expiresAt,
+  })
+
+  const appUrl = process.env.APP_URL ?? "https://amanah.app"
+  sendEmailVerification(user.email, user.displayName, `${appUrl}/verify-email?token=${verificationToken}`).catch(() => {})
+
+  return c.json({ success: true, message: "Email verifikasi dikirim ulang" })
+})
+
+const verify2faSchema = z.object({
+  userId: z.string().uuid(),
+  totpCode: z.string().length(6),
+})
+
+auth.post("/verify-2fa", authLimiter, zValidator("json", verify2faSchema), async (c) => {
+  const { userId, totpCode } = c.req.valid("json")
+
+  const [user] = await db.select().from(users).where(eq(users.id, userId))
+  if (!user || !user.totpSecret || !user.twoFactorEnabled) {
+    return c.json({ error: "2FA tidak aktif untuk akun ini" }, 400)
+  }
+
+  const isValid = verifyTotpToken(user.totpSecret, totpCode)
+  if (!isValid) {
+    return c.json({ error: "Kode 2FA tidak valid" }, 401)
+  }
+
+  const payload = { userId: user.id, role: user.role ?? "pending" }
+  const accessToken = signAccessToken(payload)
+  const refreshToken = signRefreshToken(payload)
+
+  await db.insert(refreshTokens).values({
+    userId: user.id,
+    token: refreshToken,
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+  })
+
+  return c.json({
+    accessToken,
+    refreshToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      displayName: user.displayName,
+    },
+  })
+})
+
+const setup2faSchema = z.object({
+  password: z.string().min(1),
+})
+
+auth.post("/2fa/setup", authMiddleware, zValidator("json", setup2faSchema), async (c) => {
+  const user = c.get("user")
+  const { password } = c.req.valid("json")
+
+  const [existing] = await db.select().from(users).where(eq(users.id, user.userId))
+  if (!existing) {
+    return c.json({ error: "User tidak ditemukan" }, 404)
+  }
+
+  const isValid = await comparePassword(password, existing.passwordHash)
+  if (!isValid) {
+    return c.json({ error: "Password salah" }, 401)
+  }
+
+  const { secret, uri } = generateTotpSecret(existing.email)
+
+  await db.update(users).set({ totpSecret: secret }).where(eq(users.id, user.userId))
+
+  return c.json({
+    secret,
+    uri,
+    message: "Scan QR code dengan aplikasi authenticator Anda",
+  })
+})
+
+const enable2faSchema = z.object({
+  totpCode: z.string().length(6),
+})
+
+auth.post("/2fa/enable", authMiddleware, zValidator("json", enable2faSchema), async (c) => {
+  const user = c.get("user")
+  const { totpCode } = c.req.valid("json")
+
+  const [existing] = await db.select().from(users).where(eq(users.id, user.userId))
+  if (!existing || !existing.totpSecret) {
+    return c.json({ error: "Setup 2FA terlebih dahulu" }, 400)
+  }
+
+  const isValid = verifyTotpToken(existing.totpSecret, totpCode)
+  if (!isValid) {
+    return c.json({ error: "Kode 2FA tidak valid" }, 401)
+  }
+
+  await db.update(users).set({ twoFactorEnabled: true }).where(eq(users.id, user.userId))
+
+  return c.json({ enabled: true, message: "2FA berhasil diaktifkan" })
+})
+
+auth.post("/2fa/disable", authMiddleware, zValidator("json", setup2faSchema), async (c) => {
+  const user = c.get("user")
+  const { password } = c.req.valid("json")
+
+  const [existing] = await db.select().from(users).where(eq(users.id, user.userId))
+  if (!existing) {
+    return c.json({ error: "User tidak ditemukan" }, 404)
+  }
+
+  const isValid = await comparePassword(password, existing.passwordHash)
+  if (!isValid) {
+    return c.json({ error: "Password salah" }, 401)
+  }
+
+  await db.update(users).set({ twoFactorEnabled: false, totpSecret: null }).where(eq(users.id, user.userId))
+
+  return c.json({ enabled: false, message: "2FA berhasil dinonaktifkan" })
+})
+
+auth.get("/2fa/status", authMiddleware, async (c) => {
+  const user = c.get("user")
+
+  const [existing] = await db.select({ twoFactorEnabled: users.twoFactorEnabled, totpSecret: users.totpSecret }).from(users).where(eq(users.id, user.userId))
+  if (!existing) {
+    return c.json({ error: "User tidak ditemukan" }, 404)
+  }
+
+  return c.json({
+    enabled: existing.twoFactorEnabled,
+    configured: !!existing.totpSecret,
   })
 })
 

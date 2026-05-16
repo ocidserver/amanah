@@ -19,7 +19,7 @@ async function testAdminLogin() {
   console.log(`  profileCompleted: ${user.profileCompleted}`)
   console.log(`  isVerified: ${user.isVerified}`)
 
-  const isValid = await comparePassword("password123", user.passwordHash)
+  const isValid = await comparePassword("Password123!", user.passwordHash)
   console.log(`  password valid: ${isValid}`)
 
   if (user.role === null) {

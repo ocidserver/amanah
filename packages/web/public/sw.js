@@ -38,3 +38,49 @@ self.addEventListener("fetch", (event) => {
       .catch(() => caches.match(event.request))
   )
 })
+
+self.addEventListener("push", (event) => {
+  if (!event.data) return
+
+  let payload
+  try {
+    payload = event.data.json()
+  } catch {
+    payload = { title: "Amanah", body: event.data.text() }
+  }
+
+  const options = {
+    body: payload.body || "",
+    icon: payload.icon || "/icons/icon-192.png",
+    badge: payload.badge || "/icons/icon-192.png",
+    data: payload.data || {},
+    tag: payload.tag || "default",
+    requireInteraction: payload.requireInteraction || false,
+    actions: payload.actions || [],
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title || "Amanah", options)
+  )
+})
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close()
+
+  const urlToOpen = event.notification.data?.url || "/"
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes(urlToOpen) && "focus" in client) {
+          return client.focus()
+        }
+      }
+      return self.clients.openWindow(urlToOpen)
+    })
+  )
+})
+
+self.addEventListener("notificationclose", (event) => {
+  // Optional: track notification dismissal
+})

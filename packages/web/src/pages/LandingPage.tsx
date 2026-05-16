@@ -10,10 +10,10 @@ import { LOAN_PURPOSE } from "@amanah/shared"
 import { useThemeStore } from "../stores/theme-store"
 
 const DEMO_CREDENTIALS = [
-  { role: "Pemberi Pinjaman", email: "lender@amanah.app", password: "password123", desc: "Kelola pinjaman, verifikasi cicilan, undang peminjam", icon: "lender" as const },
-  { role: "Peminjam", email: "borrower1@amanah.app", password: "password123", desc: "Ajukan pinjaman, upload bukti bayar, kirim doa lunas", icon: "borrower" as const },
-  { role: "Wali Amanah", email: "trustee@amanah.app", password: "password123", desc: "Terima permintaan, verifikasi & kembalikan jaminan", icon: "trustee" as const },
-  { role: "Admin", email: "admin@amanah.app", password: "password123", desc: "Kelola pengguna, verifikasi dokumen, approve role change", icon: "admin" as const },
+  { role: "Pemberi Pinjaman", email: "lender@amanah.app", password: "Password123!", desc: "Kelola pinjaman, verifikasi cicilan, undang peminjam", icon: "lender" as const },
+  { role: "Peminjam", email: "borrower1@amanah.app", password: "Password123!", desc: "Ajukan pinjaman, upload bukti bayar, kirim doa lunas", icon: "borrower" as const },
+  { role: "Wali Amanah", email: "trustee@amanah.app", password: "Password123!", desc: "Terima permintaan, verifikasi & kembalikan jaminan", icon: "trustee" as const },
+  { role: "Admin", email: "admin@amanah.app", password: "Password123!", desc: "Kelola pengguna, verifikasi dokumen, approve role change", icon: "admin" as const },
 ]
 
 const FAQ_DATA = [
@@ -30,14 +30,14 @@ const FAQ_DATA = [
 ]
 
 const LOAN_TYPES = [
-  { key: "business_capital", label: LOAN_PURPOSE.business_capital, desc: "Modal untuk memulai atau mengembangkan usaha kecil dan menengah", icon: <IconTrendingUp className="w-6 h-6" />, iconColor: "#7C3AED", iconBg: "#EDE9FE" },
-  { key: "home", label: LOAN_PURPOSE.home, desc: "Pembiayaan perbaikan, renovasi, atau pembangunan rumah", icon: <IconShield className="w-6 h-6" />, iconColor: "#2563EB", iconBg: "#DBEAFE" },
-  { key: "consumables", label: LOAN_PURPOSE.consumables, desc: "Kebutuhan sehari-hari yang mendesak bagi anggota komunitas", icon: <IconWallet className="w-6 h-6" />, iconColor: "#D97706", iconBg: "#FEF3C7" },
-  { key: "education", label: LOAN_PURPOSE.education, desc: "Biaya sekolah, kuliah, atau pelatihan keterampilan", icon: <IconFileText className="w-6 h-6" />, iconColor: "#0891B2", iconBg: "#CFFAFE" },
-  { key: "health", label: LOAN_PURPOSE.health, desc: "Biaya pengobatan, operasi, atau kebutuhan medis lainnya", icon: <IconCheckCircle className="w-6 h-6" />, iconColor: "#DC2626", iconBg: "#FEE2E2" },
-  { key: "urgent_needs", label: LOAN_PURPOSE.urgent_needs, desc: "Kebutuhan mendesak yang tidak bisa ditunda", icon: <IconAlertTriangle className="w-6 h-6" />, iconColor: "#EA580C", iconBg: "#FFEDD5" },
-  { key: "family_needs", label: LOAN_PURPOSE.family_needs, desc: "Kebutuhan keluarga seperti pernikahan atau acara adat", icon: <IconUser className="w-6 h-6" />, iconColor: "#0f6e56", iconBg: "#D8F3DC" },
-  { key: "debt_consolidation", label: LOAN_PURPOSE.debt_consolidation, desc: "Pelunasan hutang lama dengan pinjaman baru yang lebih ringan", icon: <IconArrowRightLeft className="w-6 h-6" />, iconColor: "#6D28D9", iconBg: "#EDE9FE" },
+  { key: "business_capital", label: LOAN_PURPOSE.business_capital, desc: "Modal untuk memulai atau mengembangkan usaha kecil dan menengah", icon: <IconTrendingUp className="w-6 h-6" />, iconColor: "#7C3AED", iconBg: "#EDE9FE", iconBgDark: "#2E1065" },
+  { key: "home", label: LOAN_PURPOSE.home, desc: "Pembiayaan perbaikan, renovasi, atau pembangunan rumah", icon: <IconShield className="w-6 h-6" />, iconColor: "#2563EB", iconBg: "#DBEAFE", iconBgDark: "#1E3A8A" },
+  { key: "consumables", label: LOAN_PURPOSE.consumables, desc: "Kebutuhan sehari-hari yang mendesak bagi anggota komunitas", icon: <IconWallet className="w-6 h-6" />, iconColor: "#D97706", iconBg: "#FEF3C7", iconBgDark: "#78350F" },
+  { key: "education", label: LOAN_PURPOSE.education, desc: "Biaya sekolah, kuliah, atau pelatihan keterampilan", icon: <IconFileText className="w-6 h-6" />, iconColor: "#0891B2", iconBg: "#CFFAFE", iconBgDark: "#164E63" },
+  { key: "health", label: LOAN_PURPOSE.health, desc: "Biaya pengobatan, operasi, atau kebutuhan medis lainnya", icon: <IconCheckCircle className="w-6 h-6" />, iconColor: "#DC2626", iconBg: "#FEE2E2", iconBgDark: "#7F1D1D" },
+  { key: "urgent_needs", label: LOAN_PURPOSE.urgent_needs, desc: "Kebutuhan mendesak yang tidak bisa ditunda", icon: <IconAlertTriangle className="w-6 h-6" />, iconColor: "#EA580C", iconBg: "#FFEDD5", iconBgDark: "#7C2D12" },
+  { key: "family_needs", label: LOAN_PURPOSE.family_needs, desc: "Kebutuhan keluarga seperti pernikahan atau acara adat", icon: <IconUser className="w-6 h-6" />, iconColor: "#0f6e56", iconBg: "#D8F3DC", iconBgDark: "#052e16" },
+  { key: "debt_consolidation", label: LOAN_PURPOSE.debt_consolidation, desc: "Pelunasan hutang lama dengan pinjaman baru yang lebih ringan", icon: <IconArrowRightLeft className="w-6 h-6" />, iconColor: "#6D28D9", iconBg: "#EDE9FE", iconBgDark: "#2E1065" },
 ]
 
 function SectionHeading({ badge, title, subtitle, light = true }: { badge: string; title: string; subtitle: string; light?: boolean }) {
@@ -51,8 +51,8 @@ function SectionHeading({ badge, title, subtitle, light = true }: { badge: strin
         <IconShield className="w-3.5 h-3.5" />
         {badge}
       </span>
-      <h2 className={`text-2xl md:text-3xl font-bold mb-3 ${light ? "text-[#1C1917]" : "text-[#F1F5F9]"}`}>{title}</h2>
-      <p className={`max-w-lg mx-auto ${light ? "text-[#57534E]" : "text-[#94A3B8]"}`}>{subtitle}</p>
+      <h2 className={`text-2xl md:text-3xl font-bold mb-3 ${light ? "text-[#1C1917] dark:text-[#F1F5F9]" : "text-[#F1F5F9]"}`}>{title}</h2>
+      <p className={`max-w-lg mx-auto ${light ? "text-[#57534E] dark:text-[#94A3B8]" : "text-[#94A3B8]"}`}>{subtitle}</p>
     </div>
   )
 }
@@ -60,19 +60,19 @@ function SectionHeading({ badge, title, subtitle, light = true }: { badge: strin
 function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className={`border rounded-xl overflow-hidden bg-white transition-all ${
-      open ? "border-l-[3px] border-l-[#40916C] border-[#E7E5E4]" : "border-[#E7E5E4]"
+    <div className={`border rounded-xl overflow-hidden bg-white dark:bg-[#1e293b] dark:border-[#334155] transition-all ${
+      open ? "border-l-[3px] border-l-[#40916C] border-[#E7E5E4] dark:border-[#334155]" : "border-[#E7E5E4]"
     }`}>
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[#F0FAF4] transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-[#F0FAF4] dark:hover:bg-[#334155]/50 transition-colors"
       >
-        <span className="font-medium text-[#1C1917] text-sm pr-4">{question}</span>
-        <IconChevronDown className={`w-5 h-5 shrink-0 transition-transform duration-200 ${open ? "rotate-180 text-[#40916C]" : "text-[#A8A29E]"}`} />
+        <span className="font-medium text-[#1C1917] dark:text-[#F1F5F9] text-sm pr-4">{question}</span>
+        <IconChevronDown className={`w-5 h-5 shrink-0 transition-transform duration-200 ${open ? "rotate-180 text-[#40916C]" : "text-[#A8A29E] dark:text-[#64748B]"}`} />
       </button>
       {open && (
-        <div className="px-5 pb-4 border-t border-[#E7E5E4]">
-          <p className="text-sm text-[#57534E] leading-relaxed whitespace-pre-line pt-3">{answer}</p>
+        <div className="px-5 pb-4 border-t border-[#E7E5E4] dark:border-[#334155]">
+          <p className="text-sm text-[#57534E] dark:text-[#94A3B8] leading-relaxed whitespace-pre-line pt-3">{answer}</p>
         </div>
       )}
     </div>
@@ -98,31 +98,31 @@ export default function LandingPage() {
   ]
 
   return (
-    <div className="min-h-dvh bg-white text-[#1C1917]">
+    <div className="min-h-dvh bg-white dark:bg-[#0f172a] text-[#1C1917] dark:text-[#F1F5F9]">
       {/* Navbar */}
-      <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-[#E7E5E4]">
+      <nav className="sticky top-0 z-40 bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-md border-b border-[#E7E5E4] dark:border-[#334155]">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[#1B4332] flex items-center justify-center">
               <span className="text-white font-bold text-sm">A</span>
             </div>
-            <span className="font-bold text-[#1B4332] text-lg">Amanah</span>
+            <span className="font-bold text-[#1B4332] dark:text-[#52B788] text-lg">Amanah</span>
           </Link>
           <div className="hidden md:flex items-center gap-1">
-            <a href="#sistem" className="text-sm text-[#57534E] hover:text-[#1C1917] px-3 py-2 rounded-lg transition-colors">Sistem</a>
-            <a href="#pembiayaan" className="text-sm text-[#57534E] hover:text-[#1C1917] px-3 py-2 rounded-lg transition-colors">Pembiayaan</a>
-            <a href="#faq" className="text-sm text-[#57534E] hover:text-[#1C1917] px-3 py-2 rounded-lg transition-colors">FAQ</a>
-            <a href="#demo" className="text-sm text-[#57534E] hover:text-[#1C1917] px-3 py-2 rounded-lg transition-colors">Demo</a>
+            <a href="#sistem" className="text-sm text-[#57534E] dark:text-[#94A3B8] hover:text-[#1C1917] dark:hover:text-[#F1F5F9] px-3 py-2 rounded-lg transition-colors">Sistem</a>
+            <a href="#pembiayaan" className="text-sm text-[#57534E] dark:text-[#94A3B8] hover:text-[#1C1917] dark:hover:text-[#F1F5F9] px-3 py-2 rounded-lg transition-colors">Pembiayaan</a>
+            <a href="#faq" className="text-sm text-[#57534E] dark:text-[#94A3B8] hover:text-[#1C1917] dark:hover:text-[#F1F5F9] px-3 py-2 rounded-lg transition-colors">FAQ</a>
+            <a href="#demo" className="text-sm text-[#57534E] dark:text-[#94A3B8] hover:text-[#1C1917] dark:hover:text-[#F1F5F9] px-3 py-2 rounded-lg transition-colors">Demo</a>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={toggle}
-              className="p-2 rounded-lg text-[#57534E] hover:text-[#1C1917] hover:bg-[#F5F5F4] transition-colors"
+              className="p-2 rounded-lg text-[#57534E] dark:text-[#94A3B8] hover:text-[#1C1917] dark:hover:text-[#F1F5F9] hover:bg-[#F5F5F4] dark:hover:bg-[#1e293b] transition-colors"
               aria-label={isDark ? "Mode terang" : "Mode gelap"}
             >
               {isDark ? <IconSun className="w-5 h-5" /> : <IconMoon className="w-5 h-5" />}
             </button>
-            <Link to="/login" className="text-sm text-[#57534E] hover:text-[#1C1917] px-3 py-2 rounded-lg transition-colors">Masuk</Link>
+            <Link to="/login" className="text-sm text-[#57534E] dark:text-[#94A3B8] hover:text-[#1C1917] dark:hover:text-[#F1F5F9] px-3 py-2 rounded-lg transition-colors">Masuk</Link>
             <Link to="/signup" className="text-sm bg-[#1B4332] hover:bg-[#153528] text-white font-medium px-4 py-2 rounded-xl active:scale-[0.98] transition-transform">Daftar</Link>
           </div>
         </div>
@@ -156,7 +156,7 @@ export default function LandingPage() {
       </section>
 
       {/* ===== SISTEM / CARA KERJA — Light ===== */}
-      <section id="sistem" className="bg-[#FAFAF9]">
+      <section id="sistem" className="bg-[#FAFAF9] dark:bg-[#0f172a]">
         <div className="max-w-6xl mx-auto px-4 py-16 md:py-20">
           <SectionHeading
             badge="Sistem"
@@ -172,19 +172,19 @@ export default function LandingPage() {
               { icon: <IconTrustee className="w-6 h-6" />, role: "Wali Amanah", desc: "Memegang & memverifikasi jaminan, mengembalikan saat lunas" },
               { icon: <IconShield className="w-6 h-6" />, role: "Admin", desc: "Verifikasi pengguna, kelola sistem, approve perubahan role" },
             ].map((r) => (
-              <div key={r.role} className="bg-white rounded-2xl border border-[#E7E5E4] p-5 text-center shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:border-[#40916C]/30 transition-all">
-                <div className="w-12 h-12 rounded-xl bg-[#D8F3DC] flex items-center justify-center mx-auto mb-3 text-[#1B4332]">
+              <div key={r.role} className="bg-white dark:bg-[#1e293b] dark:border-[#334155] rounded-2xl border border-[#E7E5E4] p-5 text-center shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:border-[#40916C]/30 transition-all">
+                <div className="w-12 h-12 rounded-xl bg-[#D8F3DC] dark:bg-[#052e16] flex items-center justify-center mx-auto mb-3 text-[#1B4332] dark:text-[#52B788]">
                   {r.icon}
                 </div>
-                <h3 className="font-semibold text-[#1C1917] text-sm mb-1">{r.role}</h3>
-                <p className="text-xs text-[#57534E]">{r.desc}</p>
+                <h3 className="font-semibold text-[#1C1917] dark:text-[#F1F5F9] text-sm mb-1">{r.role}</h3>
+                <p className="text-xs text-[#57534E] dark:text-[#94A3B8]">{r.desc}</p>
               </div>
             ))}
           </div>
 
           {/* Flow Steps */}
-          <div className="bg-[#F0FAF4] rounded-3xl p-6 md:p-10 border border-[#D8F3DC]">
-            <h3 className="font-bold text-[#1C1917] text-lg mb-6 text-center">Alur Proses Bisnis</h3>
+          <div className="bg-[#F0FAF4] dark:bg-[#111827] dark:border-[#1E3A5F] rounded-3xl p-6 md:p-10 border border-[#D8F3DC]">
+            <h3 className="font-bold text-[#1C1917] dark:text-[#F1F5F9] text-lg mb-6 text-center">Alur Proses Bisnis</h3>
 
             {/* Mobile: Vertical timeline */}
             <div className="md:hidden">
@@ -199,11 +199,11 @@ export default function LandingPage() {
                     )}
                   </div>
                   <div className="py-2 pb-6">
-                    <div className="flex items-center gap-1.5 mb-1 text-[#40916C]">
-                      {s.icon}
-                      <h4 className="font-semibold text-[14px] text-[#1C1917]">{s.title}</h4>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="text-[#40916C] dark:text-[#52B788]">{s.icon}</span>
+                      <h4 className="font-semibold text-[14px] text-[#1C1917] dark:text-[#F1F5F9]">{s.title}</h4>
                     </div>
-                    <p className="text-[13px] text-[#57534E] leading-[1.6]">{s.desc}</p>
+                    <p className="text-[13px] text-[#57534E] dark:text-[#94A3B8] leading-[1.6]">{s.desc}</p>
                   </div>
                 </div>
               ))}
@@ -220,11 +220,11 @@ export default function LandingPage() {
                     <div className="flex items-center justify-center mb-1.5 text-[#52B788]">
                       <div className="w-5 h-5">{s.icon}</div>
                     </div>
-                    <h4 className="font-semibold text-[13px] text-[#1C1917] leading-tight mb-1">{s.title}</h4>
-                    <p className="text-[11px] text-[#57534E] leading-[1.5] line-clamp-2">{s.desc}</p>
+                    <h4 className="font-semibold text-[13px] text-[#1C1917] dark:text-[#F1F5F9] leading-tight mb-1">{s.title}</h4>
+                    <p className="text-[11px] text-[#57534E] dark:text-[#94A3B8] leading-[1.5] line-clamp-2">{s.desc}</p>
                   </div>
                   {i < 4 && (
-                    <div className="text-[#40916C]/60 mx-1 self-center">
+                    <div className="text-[#40916C]/60 dark:text-[#52B788]/60 mx-1 self-center">
                       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M9 18l6-6-6-6" /></svg>
                     </div>
                   )}
@@ -236,7 +236,7 @@ export default function LandingPage() {
       </section>
 
       {/* ===== TIPE PEMBIAYAAN — Light (alternating) ===== */}
-      <section id="pembiayaan" className="bg-[#FAFAF9]">
+      <section id="pembiayaan" className="bg-[#FAFAF9] dark:bg-[#0f172a]">
         <div className="max-w-6xl mx-auto px-4 py-16 md:py-20">
           <SectionHeading
             badge="Pembiayaan"
@@ -245,12 +245,12 @@ export default function LandingPage() {
           />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {LOAN_TYPES.map((t) => (
-              <div key={t.key} className="bg-white rounded-2xl border border-[#E7E5E4] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:border-[#40916C]/30 transition-all">
+              <div key={t.key} className="bg-white dark:bg-[#1e293b] dark:border-[#334155] rounded-2xl border border-[#E7E5E4] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:border-[#40916C]/30 transition-all">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ backgroundColor: t.iconBg, color: t.iconColor }}>
                   {t.icon}
                 </div>
-                <h3 className="font-semibold text-[#1C1917] text-sm mb-1">{t.label}</h3>
-                <p className="text-xs text-[#57534E] leading-relaxed">{t.desc}</p>
+                <h3 className="font-semibold text-[#1C1917] dark:text-[#F1F5F9] text-sm mb-1">{t.label}</h3>
+                <p className="text-xs text-[#57534E] dark:text-[#94A3B8] leading-relaxed">{t.desc}</p>
               </div>
             ))}
           </div>
@@ -258,7 +258,7 @@ export default function LandingPage() {
       </section>
 
       {/* ===== FAQ — Light with green tint ===== */}
-      <section id="faq" className="bg-[#F0FAF4]">
+      <section id="faq" className="bg-[#F0FAF4] dark:bg-[#111827]">
         <div className="max-w-6xl mx-auto px-4 py-16 md:py-20">
           <SectionHeading
             badge="FAQ"
@@ -346,7 +346,7 @@ export default function LandingPage() {
             })}
           </div>
           <p className="text-center text-xs text-[#94A3B8] mt-6">
-            Semua akun menggunakan password: <code className="font-mono bg-[#1a2744] border border-[#2D4F6C] px-1.5 py-0.5 rounded">password123</code>
+            Semua akun menggunakan password: <code className="font-mono bg-[#1a2744] border border-[#2D4F6C] px-1.5 py-0.5 rounded">Password123!</code>
           </p>
         </div>
       </section>

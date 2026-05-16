@@ -7,6 +7,7 @@ import { installments, paymentProofs, loans, users } from "../db/schema"
 import { authMiddleware, AuthEnv } from "../middleware/auth"
 import { checkAndCompleteLoan } from "../lib/loan-helpers"
 import { sendPaymentConfirmedEmail, sendPaymentRejectedEmail } from "../lib/email"
+import { sendPushNotification } from "../lib/push"
 import { validateFile, validateFileContent, saveFile, deleteFile } from "../lib/storage"
 
 const proofRoutes = new Hono<AuthEnv>()
@@ -210,22 +211,42 @@ proofRoutes.patch("/:id/verify", zValidator("json", z.object({
         if (lenderUser?.email) {
           sendPaymentConfirmedEmail(lenderUser.email, inst.periodLabel, inst.amount).catch(() => {})
         }
+        sendPushNotification(instLoan.lenderId, {
+          title: "Pembayaran Dikonfirmasi",
+          body: `Cicilan ${inst.periodLabel} telah dikonfirmasi lunas.`,
+          icon: "/icons/icon-192.png",
+          tag: `payment-verified-${inst.id}`,
+          data: { url: `/pinjaman/${instLoan.id}` },
+        }).catch(() => {})
       }
       if (instLoan.borrowerId) {
         const [borrowerUser] = await db.select({ email: users.email, displayName: users.displayName }).from(users).where(eq(users.id, instLoan.borrowerId))
         if (borrowerUser?.email) {
           sendPaymentConfirmedEmail(borrowerUser.email, inst.periodLabel, inst.amount).catch(() => {})
         }
+        sendPushNotification(instLoan.borrowerId, {
+          title: "Pembayaran Dikonfirmasi",
+          body: `Cicilan ${inst.periodLabel} Anda telah dikonfirmasi lunas.`,
+          icon: "/icons/icon-192.png",
+          tag: `payment-confirmed-${inst.id}`,
+          data: { url: `/borrower/loans/${instLoan.id}` },
+        }).catch(() => {})
       }
     }
   } else if (status === "rejected") {
-    // Notify borrower that proof was rejected
     const [instLoan] = await db.select().from(loans).where(eq(loans.id, inst.loanId))
     if (instLoan?.borrowerId) {
       const [borrowerUser] = await db.select({ email: users.email, displayName: users.displayName }).from(users).where(eq(users.id, instLoan.borrowerId))
       if (borrowerUser?.email) {
         sendPaymentRejectedEmail(borrowerUser.email, inst.periodLabel, inst.amount).catch(() => {})
       }
+      sendPushNotification(instLoan.borrowerId, {
+        title: "Bukti Transfer Ditolak",
+        body: `Bukti transfer untuk cicilan ${inst.periodLabel} ditolak. Silakan upload ulang.`,
+        icon: "/icons/icon-192.png",
+        tag: `payment-rejected-${inst.id}`,
+        data: { url: `/borrower/loans/${instLoan.id}` },
+      }).catch(() => {})
     }
   }
 

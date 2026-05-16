@@ -88,6 +88,91 @@ adminRoutes.get("/stats", async (c) => {
   })
 })
 
+// GET /admin/user-growth - User growth stats (last 30 days)
+adminRoutes.get("/user-growth", async (c) => {
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+  const [newUsersResult] = await db
+    .select({ count: count() })
+    .from(users)
+    .where(gte(users.createdAt, thirtyDaysAgo))
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const [activeTodayResult] = await db
+    .select({ count: count() })
+    .from(users)
+    .where(gte(users.createdAt, today))
+
+  const sixtyDaysAgo = new Date()
+  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
+  const [prevUsersResult] = await db
+    .select({ count: count() })
+    .from(users)
+    .where(and(gte(users.createdAt, sixtyDaysAgo), lte(users.createdAt, thirtyDaysAgo)))
+
+  const newCount = newUsersResult.count
+  const prevCount = prevUsersResult.count
+  const growthRate = prevCount > 0 ? ((newCount - prevCount) / prevCount) * 100 : 0
+
+  // Daily user growth for last 30 days
+  const dailyUsers = await db
+    .select({
+      date: sql<string>`DATE(${users.createdAt})`,
+      count: count(),
+    })
+    .from(users)
+    .where(gte(users.createdAt, thirtyDaysAgo))
+    .groupBy(sql`DATE(${users.createdAt})`)
+    .orderBy(sql`DATE(${users.createdAt})`)
+
+  const userGrowth: { date: string; count: number }[] = []
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(thirtyDaysAgo)
+    d.setDate(d.getDate() + i)
+    const dateStr = d.toISOString().split("T")[0]
+    const found = dailyUsers.find((row) => row.date === dateStr)
+    userGrowth.push({
+      date: dateStr,
+      count: found ? Number(found.count) : 0,
+    })
+  }
+
+  // Loan by region (based on borrower address)
+  const loansWithBorrower = await db
+    .select({
+      amount: loans.amount,
+      borrowerAddress: users.address,
+    })
+    .from(loans)
+    .leftJoin(users, eq(loans.borrowerId, users.id))
+    .where(isNotNull(users.address))
+
+  const regionMap: Record<string, { count: number; amount: number }> = {}
+  loansWithBorrower.forEach((loan) => {
+    const region = loan.borrowerAddress?.split(",").pop()?.trim() || "Lainnya"
+    if (!regionMap[region]) {
+      regionMap[region] = { count: 0, amount: 0 }
+    }
+    regionMap[region].count++
+    regionMap[region].amount += Number(loan.amount)
+  })
+
+  const loanByRegion = Object.entries(regionMap)
+    .map(([region, data]) => ({ region, count: data.count, amount: data.amount }))
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 9)
+
+  return c.json({
+    newUsers: newCount,
+    activeToday: activeTodayResult.count,
+    growthRate,
+    userGrowth,
+    loanByRegion,
+  })
+})
+
 // GET /admin/users - List all users with search, filter, and pagination
 adminRoutes.get("/users", async (c) => {
   const roleRaw = c.req.query("role")

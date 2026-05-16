@@ -33,14 +33,14 @@ export async function checkAndCompleteLoan(loanId: string): Promise<boolean> {
   if (loan.lenderId) {
     const [lender] = await db.select({ email: users.email, displayName: users.displayName }).from(users).where(eq(users.id, loan.lenderId))
     if (lender?.email) {
-      sendLoanCompletedEmail(lender.email, loan.borrowerAlias, loan.amount).catch(() => {})
+      sendLoanCompletedEmail(lender.email, loan.borrowerAlias, loan.amount, loan.loanCode || loan.id).catch(() => {})
     }
   }
 
   if (loan.borrowerId) {
     const [borrower] = await db.select({ email: users.email, displayName: users.displayName }).from(users).where(eq(users.id, loan.borrowerId))
     if (borrower?.email) {
-      sendLoanCompletedEmail(borrower.email, loan.borrowerAlias, loan.amount).catch(() => {})
+      sendLoanCompletedEmail(borrower.email, loan.borrowerAlias, loan.amount, loan.loanCode || loan.id).catch(() => {})
     }
   }
 

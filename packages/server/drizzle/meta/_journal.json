@@ -8,6 +8,20 @@
       "when": 1778811733660,
       "tag": "0000_low_mulholland_black",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778926008658,
+      "tag": "0001_young_black_widow",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778927708735,
+      "tag": "0002_wild_yellowjacket",
+      "breakpoints": true
     }
   ]
 }

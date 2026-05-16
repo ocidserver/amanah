@@ -41,6 +41,8 @@ export const users = pgTable("users", {
   ktpDocumentUrl: text("ktp_document_url"),
   profileCompleted: boolean("profile_completed").default(false).notNull(),
   isVerified: boolean("is_verified").default(false).notNull(),
+  totpSecret: text("totp_secret"),
+  twoFactorEnabled: boolean("two_factor_enabled").default(false).notNull(),
   borrowerTier: borrowerTierEnum("borrower_tier"),
   lenderTier: lenderTierEnum("lender_tier"),
   rating: numeric("rating", { precision: 3, scale: 2 }),
@@ -250,6 +252,18 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   uniqueIndex("idx_password_reset_token").on(table.token),
 ])
 
+export const emailVerificationTokens = pgTable("email_verification_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("idx_email_verification_user_id").on(table.userId),
+  uniqueIndex("idx_email_verification_token").on(table.token),
+])
+
 export const auditLogs = pgTable("audit_logs", {
   id: uuid("id").defaultRandom().primaryKey(),
   adminId: uuid("admin_id").references(() => users.id, { onDelete: "set null" }),
@@ -266,4 +280,16 @@ export const auditLogs = pgTable("audit_logs", {
   index("idx_audit_logs_entity_id").on(table.entityId),
   index("idx_audit_logs_created_at").on(table.createdAt),
   index("idx_audit_logs_admin_created").on(table.adminId, table.createdAt),
+])
+
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  endpoint: text("endpoint").notNull(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("idx_push_subscriptions_user_id").on(table.userId),
+  uniqueIndex("idx_push_subscriptions_endpoint").on(table.endpoint),
 ])

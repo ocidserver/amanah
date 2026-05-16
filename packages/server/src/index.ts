@@ -19,6 +19,7 @@ import invitationRoutes from "./routes/loan-invitations"
 import ratingRoutes from "./routes/lender-ratings"
 import reminderRoutes from "./routes/reminders"
 import adminRoutes from "./routes/admin"
+import pushRoutes from "./routes/push"
 
 const app = new Hono()
 
@@ -55,6 +56,7 @@ app.route("/invitations", invitationRoutes)
 app.route("/lender-ratings", ratingRoutes)
 app.route("/reminders", reminderRoutes)
 app.route("/admin", adminRoutes)
+app.route("/push", pushRoutes)
 
 const port = Number(process.env.PORT ?? 3001)
 

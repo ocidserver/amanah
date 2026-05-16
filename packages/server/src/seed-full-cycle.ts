@@ -2,7 +2,7 @@ import { db } from "./db"
 import { users, trustees, loans, installments, biChecks } from "./db/schema"
 import { hashPassword } from "./lib/auth"
 
-const PASSWORD = "password123"
+const PASSWORD = "Password123!"
 
 function daysFromNow(days: number): string {
   const d = new Date()
@@ -189,10 +189,10 @@ async function seedFullCycle() {
 
   console.log("\n📋 Full Cycle Summary:")
   console.log("========================================")
-  console.log("Borrower:  ahmad.borrower@test.com / password123")
-  console.log("Lender:    siti.lender@test.com / password123")
-  console.log("Trustee:   budi.trustee@test.com / password123")
-  console.log("Admin:     admin@amanah.test / password123")
+  console.log("Borrower:  ahmad.borrower@test.com / Password123!")
+  console.log("Lender:    siti.lender@test.com / Password123!")
+  console.log("Trustee:   budi.trustee@test.com / Password123!")
+  console.log("Admin:     admin@amanah.test / Password123!")
   console.log("========================================")
   console.log("Loan:      Rp 5,000,000 — Modal Usaha")
   console.log("Collateral: Sertifikat Rumah (verified)")

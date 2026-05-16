@@ -178,6 +178,7 @@ app.patch("/applications/:id/approve", async (c) => {
 
     const contractUrl = await generateContractPdf({
       loanId: loan.id,
+      loanCode: loan.loanCode || loan.id,
       lenderName: lenderUser?.displayName || lenderUser?.email || "Pemberi Pinjaman",
       borrowerAlias: loan.borrowerAlias,
       amount: loan.amount,

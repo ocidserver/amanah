@@ -2,6 +2,7 @@ import { eq, and, isNull, inArray, lt, not } from "drizzle-orm"
 import { db } from "../db"
 import { installments, loans, users } from "../db/schema"
 import { sendPaymentReminderEmail, sendBorrowerReminderEmail } from "../lib/email"
+import { sendPushNotification } from "../lib/push"
 import fs from "fs"
 import path from "path"
 
@@ -66,6 +67,25 @@ export async function runReminderCron(): Promise<{ message: string; count: numbe
     }
     if (lenderEmail) {
       sendPaymentReminderEmail(lenderEmail, loan.borrowerAlias, inst.amount, inst.periodLabel, inst.dueDate).catch(() => {})
+    }
+
+    if (loan.borrowerId) {
+      sendPushNotification(loan.borrowerId, {
+        title: type === "H-0" ? "Jatuh Tempo Hari Ini!" : `Pengingat: ${type}`,
+        body: `Cicilan ${inst.periodLabel} sebesar Rp${inst.amount.toLocaleString("id-ID")} ${type === "H-0" ? "jatuh tempo hari ini" : `akan jatuh tempo dalam ${daysLeft} hari`}.`,
+        icon: "/icons/icon-192.png",
+        tag: `reminder-${inst.id}`,
+        data: { url: `/track/${loan.loanCode}` },
+      }).catch(() => {})
+    }
+    if (loan.lenderId) {
+      sendPushNotification(loan.lenderId, {
+        title: "Pengingat Cicilan",
+        body: `Cicilan ${inst.periodLabel} untuk ${loan.borrowerAlias} akan jatuh tempo.`,
+        icon: "/icons/icon-192.png",
+        tag: `lender-reminder-${inst.id}`,
+        data: { url: `/pinjaman/${loan.id}` },
+      }).catch(() => {})
     }
 
     await db

@@ -2,7 +2,7 @@ import { db } from "./db"
 import { users, loans, installments, trustees, completionMessages, paymentProofs, lenderRatings } from "./db/schema"
 import { hashPassword } from "./lib/auth"
 
-const SEED_PASSWORD = "password123"
+const SEED_PASSWORD = "Password123!"
 
 async function seed() {
   console.log("🌱 Seeding database...")

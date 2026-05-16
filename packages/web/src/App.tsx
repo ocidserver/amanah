@@ -18,6 +18,7 @@ import PengaturanPage from "./pages/PengaturanPage"
 import LoginPage from "./pages/LoginPage"
 import SignUpPage from "./pages/SignUpPage"
 import ForgotPasswordPage from "./pages/ForgotPasswordPage"
+import VerifyEmailPage from "./pages/VerifyEmailPage"
 import ResetPasswordPage from "./pages/ResetPasswordPage"
 import OnboardingPage from "./pages/OnboardingPage"
 import BorrowerOnboardingPage from "./pages/BorrowerOnboardingPage"
@@ -45,12 +46,19 @@ import AdminUserDetailPage from "./pages/AdminUserDetailPage"
 import AdminDocumentsPage from "./pages/AdminDocumentsPage"
 import PaymentProofsPage from "./pages/PaymentProofsPage"
 import AdminAuditLogsPage from "./pages/AdminAuditLogsPage"
+import AdminTwoFactorSetupPage from "./pages/AdminTwoFactorSetupPage"
 import NotFoundPage from "./pages/NotFoundPage"
 import TrackPage from "./pages/TrackPage"
 import TrackDetailPage from "./pages/TrackDetailPage"
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage"
 import TermsPage from "./pages/TermsPage"
 import AboutPage from "./pages/AboutPage"
+
+function AuthOnlyRoute({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  if (!isAuthenticated) return <Navigate to="/login" replace />
+  return <>{children}</>
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -109,13 +117,14 @@ export default function App() {
         <Route path="/signup" element={<PublicRoute><SignUpPage /></PublicRoute>} />
         <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
         <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
+        <Route path="/verify-email" element={<PublicRoute><VerifyEmailPage /></PublicRoute>} />
         <Route path="/invite/:token" element={<InvitationAcceptPage />} />
         <Route path="/track" element={<TrackPage />} />
         <Route path="/track/:loanCode" element={<TrackDetailPage />} />
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/about" element={<AboutPage />} />
-        <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
+        <Route path="/onboarding" element={<AuthOnlyRoute><OnboardingPage /></AuthOnlyRoute>} />
 
         <Route
           element={
@@ -180,6 +189,7 @@ export default function App() {
           <Route path="/admin/loans/:id" element={<AdminLoanDetailPage />} />
           <Route path="/admin/trustees" element={<AdminTrusteePage />} />
           <Route path="/admin/role-changes" element={<AdminRoleChangesPage />} />
+          <Route path="/admin/2fa" element={<AdminTwoFactorSetupPage />} />
         </Route>
 
         <Route path="*" element={<CatchAllRoute />} />

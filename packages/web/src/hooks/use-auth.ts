@@ -8,6 +8,7 @@ export function useAuth() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const register = useAuthStore((s) => s.register)
   const login = useAuthStore((s) => s.login)
+  const verify2fa = useAuthStore((s) => s.verify2fa)
   const setRole = useAuthStore((s) => s.setRole)
   const signOut = useAuthStore((s) => s.signOut)
   const restoreSession = useAuthStore((s) => s.restoreSession)
@@ -21,5 +22,5 @@ export function useAuth() {
   const isAdmin = user?.role === "admin"
   const hasNoRole = !user?.role
 
-  return { accessToken, user, isLoading, isAuthenticated, register, login, setRole, signOut, restoreSession, fetchProfile, updateProfile, uploadKtp, isLender, isBorrower, isTrustee, isAdmin, hasNoRole }
+  return { accessToken, user, isLoading, isAuthenticated, register, login, verify2fa, setRole, signOut, restoreSession, fetchProfile, updateProfile, uploadKtp, isLender, isBorrower, isTrustee, isAdmin, hasNoRole }
 }

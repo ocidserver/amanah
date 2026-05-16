@@ -1,10 +1,13 @@
 const API_URL = import.meta.env.VITE_API_URL ?? "/api"
+const CACHE_KEY_PREFIX = "amanah-api-cache:"
+const CACHE_TTL = 5 * 60 * 1000
 
 interface RequestOptions {
   method?: string
   body?: unknown
   headers?: Record<string, string>
   retries?: number
+  cache?: boolean
 }
 
 function getAccessToken(): string | null {
@@ -23,6 +26,28 @@ async function setTokens(accessToken: string, refreshToken: string): Promise<voi
 async function clearTokens(): Promise<void> {
   localStorage.removeItem("auth_access_token")
   localStorage.removeItem("auth_refresh_token")
+}
+
+function getCachedData<T>(path: string): T | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY_PREFIX + path)
+    if (!raw) return null
+    const { data, timestamp } = JSON.parse(raw)
+    if (Date.now() - timestamp > CACHE_TTL) {
+      localStorage.removeItem(CACHE_KEY_PREFIX + path)
+      return null
+    }
+    return data as T
+  } catch {
+    return null
+  }
+}
+
+function setCachedData<T>(path: string, data: T): void {
+  try {
+    localStorage.setItem(CACHE_KEY_PREFIX + path, JSON.stringify({ data, timestamp: Date.now() }))
+  } catch {
+  }
 }
 
 let isRefreshing = false
@@ -98,17 +123,21 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 2): P
 }
 
 async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = "GET", body, headers = {}, retries = 2 } = options
-
-  if (!navigator.onLine) {
-    throw new Error("Tidak ada koneksi internet")
-  }
+  const { method = "GET", body, headers = {}, retries = 2, cache = true } = options
 
   const token = getAccessToken()
   if (token) {
     headers["Authorization"] = `Bearer ${token}`
   }
   headers["Content-Type"] = "application/json"
+
+  if (!navigator.onLine) {
+    if (method === "GET" && cache) {
+      const cached = getCachedData<T>(path)
+      if (cached) return cached
+    }
+    throw new Error("Tidak ada koneksi internet")
+  }
 
   let response: Response
   try {
@@ -118,6 +147,10 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
       body: body ? JSON.stringify(body) : undefined,
     }, retries)
   } catch {
+    if (method === "GET" && cache) {
+      const cached = getCachedData<T>(path)
+      if (cached) return cached
+    }
     throw new Error("Tidak dapat terhubung ke server. Periksa koneksi internet Anda.")
   }
 
@@ -136,7 +169,11 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
         throw new Error(getErrorMessage(retryResponse.status, error.error))
       }
 
-      return retryResponse.json()
+      const data = await retryResponse.json()
+      if (method === "GET" && cache) {
+        setCachedData(path, data)
+      }
+      return data
     }
 
     await clearTokens()
@@ -149,18 +186,22 @@ async function apiRequest<T>(path: string, options: RequestOptions = {}): Promis
     throw new Error(getErrorMessage(response.status, error.error))
   }
 
-  return response.json()
+  const data = await response.json()
+  if (method === "GET" && cache) {
+    setCachedData(path, data)
+  }
+  return data
 }
 
 async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
-  if (!navigator.onLine) {
-    throw new Error("Tidak ada koneksi internet")
-  }
-
   const token = getAccessToken()
   const headers: Record<string, string> = {}
   if (token) {
     headers["Authorization"] = `Bearer ${token}`
+  }
+
+  if (!navigator.onLine) {
+    throw new Error("Tidak ada koneksi internet")
   }
 
   let response: Response

@@ -1,6 +1,6 @@
 # TODO.md — Daftar Task yang Belum Diimplementasi
 
-> Diperbarui: 16 Mei 2026
+> Diperbarui: 16 Mei 2026 — Fase 11: Push Notifications selesai
 
 ## ✅ Selesai
 
@@ -30,26 +30,58 @@
 - [x] DB indexes (40+)
 - [x] Security (CORS, sanitization, MIME validation, rate limiting)
 
+### Fase 8: Production Polish ✅
+- [x] Responsive polish & accessibility — ARIA labels, keyboard navigation, focus-visible rings
+- [x] i18n usage di komponen — 200+ keys, 13 komponen di-update (ID/EN)
+- [x] Admin dashboard expansion — User growth chart (30 hari), loan distribution map by region
+- [x] Contract PDF polish — Watermark loan_code, colored sections, highlighted totals, better formatting
+
+### Fase 9: Offline & Bulk Operations ✅
+- [x] Offline mode polish — React Query persist to localStorage, API client cache fallback, stale data display
+- [x] Password strength meter — Added to change password form (ProfilPage) with visual bar + label
+- [x] Export data — CSV export button on PinjamanPage (loan code, borrower, amount, purpose, status, date)
+- [x] Bulk operations — Checkbox select + bulk approve/reject on AdminRoleChangesPage, export CSV
+
+### Fase 10: Two-Factor Authentication ✅
+- [x] Server-side TOTP endpoints — `/auth/2fa/setup`, `/auth/2fa/enable`, `/auth/2fa/disable`, `/auth/verify-2fa`, `/auth/2fa/status`
+- [x] Client-side 2FA flow — Login intercepts admin 2FA, `AdminTwoFactorSetupPage.tsx` UI, auth store `verify2fa` action
+- [x] 2FA navigation — Added to AdminLayout sidebar nav and i18n translations (ID/EN)
+
+### Fase 11: Push Notifications ✅
+- [x] Server-side web-push — `web-push` library, VAPID keys configuration, `lib/push.ts` utility
+- [x] Database schema — `push_subscriptions` table (user_id, endpoint, p256dh, auth)
+- [x] Push endpoints — `POST /push/subscribe`, `POST /push/unsubscribe`, `GET /push/public-key`, `POST /push/test`
+- [x] Service worker — Push event handler, notification click handler, badge/icon support
+- [x] Client hook — `usePushNotification()` for subscribe/unsubscribe/test, permission handling
+- [x] Settings UI — Push notification toggle in PengaturanPage with test button
+- [x] Cron integration — Payment reminder push notifications (H-3 and H-0) for borrower and lender
+- [x] Payment proof push — Verified/rejected push notifications to borrower and lender
+- [x] Loan status push — Approved, activated, cancelled, defaulted push notifications to borrower
+
+### Fase 12: Email Verification Flow ✅
+- [x] Database schema — `email_verification_tokens` table (user_id, token, expires_at, used_at)
+- [x] Server endpoints — `GET /auth/verify-email?token=xxx`, `POST /auth/resend-verification`
+- [x] Registration flow — Creates verification token, sends verification email instead of welcome email, returns `emailVerificationRequired` flag
+- [x] Login flow — Checks `isVerified`, returns `emailVerificationRequired` if unverified, blocks login
+- [x] Web page — `VerifyEmailPage.tsx` with 4 states: verifying, success, error, resend
+- [x] Route — `/verify-email` added to App.tsx as public route
+- [x] SignUpPage — Redirects to `/verify-email` after registration
+- [x] LoginPage — Redirects to `/verify-email` when login fails due to unverified email
+- [x] Email template — `[AMANAH app] Verifikasi Email` with 24-hour expiration link
+
 ## 🔴 Belum Diimplementasi
 
 ### Medium Priority
-- [ ] **Responsive polish & accessibility** — ARIA labels, keyboard navigation, font size scaling
-- [ ] **Email notification expansion** — Email untuk contract generated, auto-delete notification
-- [ ] **Admin dashboard expansion** — Charts untuk user growth, loan distribution map
-- [ ] **Contract PDF polish** — Add loan_code to PDF, better formatting, watermark
-- [ ] **i18n usage di komponen** — Ganti hardcoded text dengan `t()` function
-- [ ] **Offline mode polish** — Cache API responses, show stale data when offline
-- [ ] **Password strength meter** — Visual indicator saat register/change password
-- [ ] **Two-factor authentication (2FA)** — TOTP-based 2FA untuk admin
-- [ ] **Export data** — Export pinjaman ke CSV/PDF untuk lender
-- [ ] **Bulk operations** — Bulk approve/reject applications di admin panel
+- [x] **Two-factor authentication (2FA)** — TOTP-based 2FA untuk admin
+- [x] **Email notification expansion** — Email untuk contract generated, auto-delete notification
 
 ### Low Priority
-- [ ] **Push notifications** — Web push untuk payment reminders
+- [x] **Push notifications** — Web push untuk payment reminders, payment verified/rejected, loan status changes
 - [ ] **Multi-language expansion** — Tambah bahasa Arab, Melayu
 - [ ] **Analytics dashboard** — Google Analytics / Plausible integration
 - [ ] **API rate limiting per IP** — Redis-based rate limiting
 - [ ] **Backup & restore** — Automated database backup script
+- [ ] **User settings page** — Laman pengaturan via avatar menu (ganti password, setting email server, preferensi notifikasi, tema, bahasa)
 - [ ] **Audit log viewer untuk user** — User bisa lihat log aktivitas mereka
 - [ ] **Loan template** — Template pinjaman yang sering digunakan
 - [ ] **Recurring loans** — Pinjaman berulang otomatis
@@ -73,7 +105,7 @@
 | Kategori | Selesai | Belum | Total |
 |---|---|---|---|
 | High Priority | 12 | 0 | 12 |
-| Medium Priority | 0 | 10 | 10 |
-| Low Priority | 0 | 10 | 10 |
+| Medium Priority | 10 | 0 | 10 |
+| Low Priority | 1 | 10 | 11 |
 | Technical Debt | 0 | 10 | 10 |
-| **Total** | **12** | **30** | **42** |
+| **Total** | **23** | **20** | **43** |

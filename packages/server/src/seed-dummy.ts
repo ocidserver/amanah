@@ -2,7 +2,7 @@ import { db } from "./db"
 import { users } from "./db/schema"
 import { hashPassword } from "./lib/auth"
 
-const PASSWORD = "password123"
+const PASSWORD = "Password123!"
 
 async function seedDummyAccounts() {
   const passwordHash = await hashPassword(PASSWORD)
@@ -56,7 +56,7 @@ async function seedDummyAccounts() {
   console.log("Pemberi:   pemberi@amanah.test")
   console.log("Wali:      wali@amanah.test")
   console.log("Admin:     admin@amanah.test")
-  console.log("Password:  password123")
+  console.log("Password:  Password123!")
   console.log("========================================")
 
   process.exit(0)

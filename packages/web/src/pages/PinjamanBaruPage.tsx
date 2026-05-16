@@ -5,9 +5,11 @@ import { api } from "../lib/api"
 import { COLLATERAL_TYPE, INSTALLMENT_TYPE, LOAN_PURPOSE } from "@amanah/shared"
 import type { ITrustee } from "@amanah/shared"
 import { formatCurrency } from "../lib/utils"
+import { useI18n } from "../hooks/use-i18n"
 
 export default function PinjamanBaruPage() {
   const navigate = useNavigate()
+  const { t, language } = useI18n()
   const [form, setForm] = useState({
     borrowerAlias: "Peminjam",
     borrowerEmail: "",
@@ -92,18 +94,44 @@ export default function PinjamanBaruPage() {
     }
   }
 
+  const purposeLabels: Record<string, string> = {
+    business_capital: t("loan.business"),
+    housing: t("loan.housing"),
+    consumptive: t("loan.consumptive"),
+    education: t("loan.education"),
+    health: t("loan.health"),
+    urgent_needs: t("loan.urgent"),
+    family_needs: t("loan.family"),
+    debt_payment: t("loan.debtPayment"),
+  }
+
+  const installmentLabels: Record<string, string> = {
+    monthly: t("loan.monthly"),
+    weekly: t("loan.weekly"),
+    lump_sum: t("loan.lumpSum"),
+    flexible: t("loan.flexible"),
+  }
+
+  const collateralLabels: Record<string, string> = {
+    document: t("loan.document"),
+    valuables: t("loan.valuables"),
+    letter: t("loan.letter"),
+    none: t("loan.none"),
+  }
+
   return (
     <div className="px-4 pt-2 pb-8">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Catat Pinjaman Baru</h2>
+      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">{t("loan.newTitle")}</h2>
 
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 mb-4 text-sm">{error}</div>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 mb-4 text-sm" role="alert">{error}</div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Email Peminjam <span className="text-gray-400 dark:text-slate-500 font-normal">(opsional)</span></label>
+          <label htmlFor="borrower-email" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t("auth.email")} {t("loan.borrower")} <span className="text-gray-400 dark:text-slate-500 font-normal">(opsional)</span></label>
           <input
+            id="borrower-email"
             type="email"
             value={form.borrowerEmail}
             onChange={(e) => { setForm({ ...form, borrowerEmail: e.target.value }); if (!e.target.value.trim()) setBorrowerLookup(null) }}
@@ -111,7 +139,7 @@ export default function PinjamanBaruPage() {
             className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
             placeholder="peminjam@email.com"
           />
-          {lookingUpBorrower && <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Mencari akun peminjam...</p>}
+          {lookingUpBorrower && <p className="text-xs text-gray-400 dark:text-slate-500 mt-1" role="status">{t("common.loading")}</p>}
           {borrowerLookup?.found && (
             <p className="text-xs text-green-600 dark:text-green-400 mt-1">
               Akun ditemukan: <strong>{borrowerLookup.displayName || "Tanpa Nama"}</strong>
@@ -125,8 +153,9 @@ export default function PinjamanBaruPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Alias Peminjam</label>
+          <label htmlFor="borrower-alias" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t("loan.borrower")}</label>
           <input
+            id="borrower-alias"
             type="text"
             value={form.borrowerAlias}
             onChange={(e) => setForm({ ...form, borrowerAlias: e.target.value })}
@@ -136,8 +165,9 @@ export default function PinjamanBaruPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Nominal (Rp)</label>
+          <label htmlFor="loan-amount" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t("loan.amount")} (Rp)</label>
           <input
+            id="loan-amount"
             type="number"
             value={form.amount}
             onChange={(e) => setForm({ ...form, amount: e.target.value })}
@@ -148,21 +178,23 @@ export default function PinjamanBaruPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Tujuan Pinjaman</label>
+          <label htmlFor="loan-purpose" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t("loan.purpose")}</label>
           <select
+            id="loan-purpose"
             value={form.purpose}
             onChange={(e) => setForm({ ...form, purpose: e.target.value })}
             className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
           >
-            {Object.entries(LOAN_PURPOSE).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
+            {Object.entries(LOAN_PURPOSE).map(([key]) => (
+              <option key={key} value={key}>{purposeLabels[key] || LOAN_PURPOSE[key as keyof typeof LOAN_PURPOSE]}</option>
             ))}
           </select>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Durasi (bulan)</label>
+          <label htmlFor="loan-duration" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t("loan.duration")} ({t("loan.months")})</label>
           <input
+            id="loan-duration"
             type="number"
             value={form.durationMonths}
             onChange={(e) => setForm({ ...form, durationMonths: e.target.value })}
@@ -174,51 +206,55 @@ export default function PinjamanBaruPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Pola Cicilan</label>
+          <label htmlFor="loan-installment" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t("loan.installment")}</label>
           <select
+            id="loan-installment"
             value={form.installmentType}
             onChange={(e) => setForm({ ...form, installmentType: e.target.value })}
             className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
           >
-            {Object.entries(INSTALLMENT_TYPE).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
+            {Object.entries(INSTALLMENT_TYPE).map(([key]) => (
+              <option key={key} value={key}>{installmentLabels[key] || INSTALLMENT_TYPE[key as keyof typeof INSTALLMENT_TYPE]}</option>
             ))}
           </select>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Jenis Jaminan</label>
+          <label htmlFor="loan-collateral" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t("loan.collateral")}</label>
           <select
+            id="loan-collateral"
             value={form.collateralType}
             onChange={(e) => setForm({ ...form, collateralType: e.target.value })}
             className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
           >
-            {Object.entries(COLLATERAL_TYPE).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
+            {Object.entries(COLLATERAL_TYPE).map(([key]) => (
+              <option key={key} value={key}>{collateralLabels[key] || COLLATERAL_TYPE[key as keyof typeof COLLATERAL_TYPE]}</option>
             ))}
           </select>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Wali Amanah <span className="text-gray-400 dark:text-slate-500 font-normal">(opsional)</span></label>
+          <label htmlFor="loan-trustee" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t("loan.trustee")} <span className="text-gray-400 dark:text-slate-500 font-normal">(opsional)</span></label>
           <select
+            id="loan-trustee"
             value={form.trusteeId}
             onChange={(e) => setForm({ ...form, trusteeId: e.target.value })}
             className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
           >
-            <option value="">Tanpa Wali Amanah</option>
-            {trustees.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}{t.type === "institution" ? ` (${t.institution || "Institusi"})` : ""}</option>
+            <option value="">{t("loan.none")}</option>
+            {trustees.map((trustee) => (
+              <option key={trustee.id} value={trustee.id}>{trustee.name}{trustee.type === "institution" ? ` (${trustee.institution || "Institusi"})` : ""}</option>
             ))}
           </select>
           {trustees.length === 0 && (
-            <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Belum ada wali amanah. <a href="/wali-amanah/undang" className="text-[var(--color-primary)] underline">Undang sekarang</a></p>
+            <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{t("trustee.noTrustees")}. <a href="/wali-amanah/undang" className="text-[var(--color-primary)] underline">{t("trustee.invite")}</a></p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Catatan <span className="text-gray-400 dark:text-slate-500 font-normal">(opsional)</span></label>
+          <label htmlFor="loan-notes" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t("common.detail")} <span className="text-gray-400 dark:text-slate-500 font-normal">(opsional)</span></label>
           <textarea
+            id="loan-notes"
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
             className="w-full border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-100 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none"
@@ -232,24 +268,24 @@ export default function PinjamanBaruPage() {
         <div className="space-y-3 pt-2">
           <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-slate-300">
             <input type="checkbox" checked={form.hideBorrower} onChange={(e) => setForm({ ...form, hideBorrower: e.target.checked })} className="accent-[var(--color-primary)] w-4 h-4" />
-            Sembunyikan alias peminjam
+            {language === "id" ? "Sembunyikan alias peminjam" : "Hide borrower alias"}
           </label>
           <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-slate-300">
             <input type="checkbox" checked={form.reminderEnabled} onChange={(e) => setForm({ ...form, reminderEnabled: e.target.checked })} className="accent-[var(--color-primary)] w-4 h-4" />
-            Aktifkan pengingat cicilan
+            {t("loan.reminder")}
           </label>
           <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-slate-300">
             <input type="checkbox" checked={form.doaLunasEnabled} onChange={(e) => setForm({ ...form, doaLunasEnabled: e.target.checked })} className="accent-[var(--color-primary)] w-4 h-4" />
-            Aktifkan doa lunas
+            {t("loan.doaLunas")}
           </label>
         </div>
 
         <button
           type="submit"
           disabled={submitting}
-          className="w-full bg-[var(--color-primary)] text-white rounded-xl py-3 font-semibold text-base disabled:opacity-50 active:scale-[0.98] transition-transform"
+          className="w-full bg-[var(--color-primary)] text-white rounded-xl py-3 font-semibold text-base disabled:opacity-50 active:scale-[0.98] transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-primary)]"
         >
-          {submitting ? "Menyimpan..." : "Buat Pinjaman"}
+          {submitting ? `${t("common.saving")}` : t("loan.new")}
         </button>
       </form>
     </div>

@@ -27,8 +27,9 @@ interface IAuthState {
   user: IUser | null
   isLoading: boolean
   isAuthenticated: boolean
-  register: (email: string, password: string, displayName?: string) => Promise<void>
+  register: (email: string, password: string, displayName?: string) => Promise<{ emailVerificationRequired?: boolean; email?: string } | void>
   login: (email: string, password: string) => Promise<void>
+  verify2fa: (userId: string, totpCode: string) => Promise<void>
   setRole: (role: UserRole) => Promise<void>
   signOut: () => Promise<void>
   restoreSession: () => Promise<void>
@@ -45,25 +46,63 @@ export const useAuthStore = create<IAuthState>((set, get) => ({
 
   register: async (email: string, password: string, displayName?: string) => {
     const data = await api.post<{
-      accessToken: string
-      refreshToken: string
+      accessToken?: string
+      refreshToken?: string
       user: IUser
+      emailVerificationRequired?: boolean
     }>("/auth/register", { email, password, displayName })
 
-    await setTokens(data.accessToken, data.refreshToken)
-    set({
-      accessToken: data.accessToken,
-      user: data.user,
-      isAuthenticated: true,
-    })
+    if (data.emailVerificationRequired) {
+      set({ user: data.user as IUser, isAuthenticated: false })
+      return { emailVerificationRequired: true, email: data.user.email }
+    }
+
+    if (data.accessToken && data.refreshToken) {
+      await setTokens(data.accessToken, data.refreshToken)
+      set({
+        accessToken: data.accessToken,
+        user: data.user,
+        isAuthenticated: true,
+      })
+    }
   },
 
   login: async (email: string, password: string) => {
     const data = await api.post<{
+      accessToken?: string
+      refreshToken?: string
+      user: IUser
+      twoFactorRequired?: boolean
+      userId?: string
+      emailVerificationRequired?: boolean
+    }>("/auth/login", { email, password })
+
+    if (data.twoFactorRequired) {
+      set({ user: data.user as IUser, isAuthenticated: false })
+      return
+    }
+
+    if (data.emailVerificationRequired) {
+      set({ user: data.user as IUser, isAuthenticated: false })
+      throw new Error("Email belum diverifikasi. Silakan verifikasi email Anda terlebih dahulu.")
+    }
+
+    if (data.accessToken && data.refreshToken) {
+      await setTokens(data.accessToken, data.refreshToken)
+      set({
+        accessToken: data.accessToken,
+        user: data.user,
+        isAuthenticated: true,
+      })
+    }
+  },
+
+  verify2fa: async (userId: string, totpCode: string) => {
+    const data = await api.post<{
       accessToken: string
       refreshToken: string
       user: IUser
-    }>("/auth/login", { email, password })
+    }>("/auth/verify-2fa", { userId, totpCode })
 
     await setTokens(data.accessToken, data.refreshToken)
     set({
