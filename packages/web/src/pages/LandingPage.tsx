@@ -89,6 +89,14 @@ export default function LandingPage() {
     setTimeout(() => setCopiedIdx(null), 2000)
   }
 
+  const flowSteps = [
+    { step: "1", title: "Peminjam Daftar", desc: "Buat akun, lengkapi profil, lolos BI Checking", icon: <IconUser className="w-5 h-5" /> },
+    { step: "2", title: "Ajukan Pinjaman", desc: "Peminjam ajukan, lender tinjau & approve", icon: <IconFileText className="w-5 h-5" /> },
+    { step: "3", title: "Serahkan Jaminan", desc: "Wali amanah terima & verifikasi jaminan", icon: <IconShield className="w-5 h-5" /> },
+    { step: "4", title: "Bayar Cicilan", desc: "Peminjam bayar & upload bukti transfer", icon: <IconCalendar className="w-5 h-5" /> },
+    { step: "5", title: "Lunas & Doa", desc: "Jaminan dikembalikan, kirim doa lunas", icon: <IconCheckCircle className="w-5 h-5" /> },
+  ]
+
   return (
     <div className="min-h-dvh bg-white text-[#1C1917]">
       {/* Navbar */}
@@ -177,26 +185,47 @@ export default function LandingPage() {
           {/* Flow Steps */}
           <div className="bg-[#F0FAF4] rounded-3xl p-6 md:p-10 border border-[#D8F3DC]">
             <h3 className="font-bold text-[#1C1917] text-lg mb-6 text-center">Alur Proses Bisnis</h3>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              {[
-                { step: "1", title: "Peminjam Daftar", desc: "Buat akun, lengkapi profil, lolos BI Checking", icon: <IconUser className="w-5 h-5" /> },
-                { step: "2", title: "Ajukan Pinjaman", desc: "Peminjam ajukan, lender tinjau & approve", icon: <IconFileText className="w-5 h-5" /> },
-                { step: "3", title: "Serahkan Jaminan", desc: "Wali amanah terima & verifikasi jaminan", icon: <IconShield className="w-5 h-5" /> },
-                { step: "4", title: "Bayar Cicilan", desc: "Peminjam bayar & upload bukti transfer", icon: <IconCalendar className="w-5 h-5" /> },
-                { step: "5", title: "Lunas & Doa", desc: "Jaminan dikembalikan, kirim doa lunas", icon: <IconCheckCircle className="w-5 h-5" /> },
-              ].map((s, i) => (
-                <div key={s.step} className="relative text-center">
-                  <div className="w-10 h-10 rounded-full bg-[#1B4332] text-white font-bold text-sm flex items-center justify-center mx-auto mb-3">
-                    {s.step}
+
+            {/* Mobile: Vertical timeline */}
+            <div className="md:hidden">
+              {flowSteps.map((s, i) => (
+                <div key={s.step} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <div className="w-10 h-10 rounded-full bg-[#1B4332] text-white font-bold text-sm flex items-center justify-center shrink-0">
+                      {s.step}
+                    </div>
+                    {i < 4 && (
+                      <div className="w-0.5 flex-1 bg-[#40916C]/30 mt-2" />
+                    )}
                   </div>
-                  <div className="flex items-center justify-center gap-1.5 mb-1 text-[#40916C]">
-                    {s.icon}
-                    <h4 className="font-semibold text-sm text-[#1C1917]">{s.title}</h4>
+                  <div className="py-2 pb-6">
+                    <div className="flex items-center gap-1.5 mb-1 text-[#40916C]">
+                      {s.icon}
+                      <h4 className="font-semibold text-[14px] text-[#1C1917]">{s.title}</h4>
+                    </div>
+                    <p className="text-[13px] text-[#57534E] leading-[1.6]">{s.desc}</p>
                   </div>
-                  <p className="text-xs text-[#44403C]">{s.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: Horizontal with wrapping */}
+            <div className="hidden md:flex flex-wrap justify-center items-start gap-y-4">
+              {flowSteps.map((s, i) => (
+                <div key={s.step} className="flex items-center">
+                  <div className="min-w-[140px] px-3 py-4 text-center">
+                    <div className="w-9 h-9 rounded-full bg-[#1B4332] text-white font-bold text-[14px] flex items-center justify-center mx-auto mb-2">
+                      {s.step}
+                    </div>
+                    <div className="flex items-center justify-center mb-1.5 text-[#52B788]">
+                      <div className="w-5 h-5">{s.icon}</div>
+                    </div>
+                    <h4 className="font-semibold text-[13px] text-[#1C1917] leading-tight mb-1">{s.title}</h4>
+                    <p className="text-[11px] text-[#57534E] leading-[1.5] line-clamp-2">{s.desc}</p>
+                  </div>
                   {i < 4 && (
-                    <div className="hidden md:block absolute top-5 -right-2 text-[#40916C]">
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M9 18l6-6-6-6" /></svg>
+                    <div className="text-[#40916C]/60 mx-1 self-center">
+                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M9 18l6-6-6-6" /></svg>
                     </div>
                   )}
                 </div>
