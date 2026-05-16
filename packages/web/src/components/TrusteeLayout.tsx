@@ -1,7 +1,8 @@
 import { Outlet, NavLink, Navigate } from "react-router-dom"
 import { useAuth } from "../hooks/use-auth"
+import { useThemeStore } from "../stores/theme-store"
 import { useNetworkStatus } from "../hooks/use-network-status"
-import { IconShield, IconUser, IconSettings } from "./Icons"
+import { IconShield, IconUser, IconSettings, IconSun, IconMoon } from "./Icons"
 
 const navItems = [
   { to: "/trustee", label: "Dashboard", Icon: IconShield },
@@ -11,6 +12,7 @@ const navItems = [
 
 export default function TrusteeLayout() {
   const { isBorrower } = useAuth()
+  const { isDark, toggle } = useThemeStore()
   const isOnline = useNetworkStatus()
 
   if (isBorrower) {
@@ -18,7 +20,7 @@ export default function TrusteeLayout() {
   }
 
   return (
-    <div className="min-h-dvh bg-gray-50 flex flex-col">
+    <div className="min-h-dvh bg-gray-50 dark:bg-slate-900 flex flex-col">
       {!isOnline && (
         <div className="bg-amber-500 text-white text-center text-xs py-1.5 font-medium sticky top-0 z-50">
           Tidak ada koneksi internet
@@ -26,14 +28,23 @@ export default function TrusteeLayout() {
       )}
       <header className="bg-[var(--color-primary)] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-40 safe-top">
         <h1 className="text-lg font-bold tracking-wide">Amanah</h1>
-        <span className="text-xs opacity-70">Wali Amanah</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggle}
+            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            aria-label={isDark ? "Mode terang" : "Mode gelap"}
+          >
+            {isDark ? <IconSun className="w-5 h-5" /> : <IconMoon className="w-5 h-5" />}
+          </button>
+          <span className="text-xs opacity-70">Wali Amanah</span>
+        </div>
       </header>
 
       <main className="flex-1 pb-20">
         <Outlet />
       </main>
 
-      <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 z-40 safe-bottom" role="navigation" aria-label="Navigasi wali amanah">
+      <nav className="fixed bottom-0 inset-x-0 bg-white dark:bg-slate-800 dark:border-slate-700 border-t border-gray-100 z-40 safe-bottom" role="navigation" aria-label="Navigasi wali amanah">
         <div className="max-w-lg mx-auto grid grid-cols-3">
           {navItems.map((item) => (
             <NavLink

@@ -1,28 +1,36 @@
 import { create } from "zustand"
 
+function getInitialDark(): boolean {
+  if (typeof window === "undefined") return false
+  const stored = localStorage.getItem("theme")
+  if (stored === "dark" || stored === "light") return stored === "dark"
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+}
+
+function applyDark(dark: boolean) {
+  if (typeof window === "undefined") return
+  localStorage.setItem("theme", dark ? "dark" : "light")
+  document.documentElement.classList.toggle("dark", dark)
+}
+
 interface ThemeState {
   isDark: boolean
   toggle: () => void
   setDark: (dark: boolean) => void
 }
 
-export const useThemeStore = create<ThemeState>((set) => ({
-  isDark: typeof window !== "undefined" && localStorage.getItem("theme") === "dark",
-  toggle: () =>
-    set((state) => {
-      const next = !state.isDark
-      if (typeof window !== "undefined") {
-        localStorage.setItem("theme", next ? "dark" : "light")
-        document.documentElement.classList.toggle("dark", next)
-      }
-      return { isDark: next }
-    }),
-  setDark: (dark) =>
-    set(() => {
-      if (typeof window !== "undefined") {
-        localStorage.setItem("theme", dark ? "dark" : "light")
-        document.documentElement.classList.toggle("dark", dark)
-      }
-      return { isDark: dark }
-    }),
+const initial = getInitialDark()
+applyDark(initial)
+
+export const useThemeStore = create<ThemeState>((set, get) => ({
+  isDark: initial,
+  toggle: () => {
+    const next = !get().isDark
+    applyDark(next)
+    set({ isDark: next })
+  },
+  setDark: (dark) => {
+    applyDark(dark)
+    set({ isDark: dark })
+  },
 }))

@@ -4,11 +4,7 @@ import { BrowserRouter } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import App from "./App"
 import "./index.css"
-
-const savedTheme = localStorage.getItem("theme")
-if (savedTheme === "dark") {
-  document.documentElement.classList.add("dark")
-}
+import "./stores/theme-store"
 
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   /* ===== Primary — Forest Green ===== */
@@ -54,6 +55,15 @@
   --color-info: #2563eb;
   --color-info-bg: #eff6ff;
   --color-info-border: #bfdbfe;
+
+  /* ===== Card-specific tokens ===== */
+  --color-card-bg: #ffffff;
+  --color-card-border: #e2e8f0;
+  --color-card-heading: #0f172a;
+  --color-card-body: #475569;
+  --color-card-caption: #94a3b8;
+  --color-icon-bright: #1B4332;
+  --color-icon-bg: #D8F3DC;
 }
 
 html {
@@ -82,41 +92,44 @@ select {
 }
 
 /* ===== Dark Mode ===== */
-html.dark {
-  color-scheme: dark;
-  --color-primary: #2D6A4F;
-  --color-primary-hover: #40916C;
-  --color-primary-light: #40916C;
-  --color-accent: #f59e0b;
-  --color-accent-hover: #d97706;
-  --color-surface: #0f172a;
-  --color-surface-alt: #1e293b;
-  --color-surface-hover: #334155;
-  --color-border: #334155;
-  --color-border-light: #1e293b;
-  --color-text: #f1f5f9;
-  --color-text-secondary: #cbd5e1;
-  --color-text-muted: #64748b;
-  --color-success-bg: #052e16;
-  --color-success-border: #166534;
-  --color-warning-bg: #451a03;
-  --color-warning-border: #92400e;
-  --color-danger-bg: #450a0a;
-  --color-danger-border: #991b1b;
-  --color-info-bg: #172554;
-  --color-info-border: #1e40af;
-
-  /* Card-specific tokens for dark mode */
-  --color-card-bg: #162032;
-  --color-card-border: #1E3A5F;
-  --color-card-heading: #F1F5F9;
-  --color-card-body: #CBD5E1;
-  --color-card-caption: #94A3B8;
-  --color-icon-bright: #52B788;
-  --color-icon-bg: #052e16;
+@layer theme {
+  .dark {
+    --color-primary: #2D6A4F;
+    --color-primary-hover: #40916C;
+    --color-primary-light: #40916C;
+    --color-accent: #f59e0b;
+    --color-accent-hover: #d97706;
+    --color-surface: #0f172a;
+    --color-surface-alt: #1e293b;
+    --color-surface-hover: #334155;
+    --color-border: #334155;
+    --color-border-light: #1e293b;
+    --color-text: #f1f5f9;
+    --color-text-secondary: #cbd5e1;
+    --color-text-muted: #64748b;
+    --color-success-bg: #052e16;
+    --color-success-border: #166534;
+    --color-warning-bg: #451a03;
+    --color-warning-border: #92400e;
+    --color-danger-bg: #450a0a;
+    --color-danger-border: #991b1b;
+    --color-info-bg: #172554;
+    --color-info-border: #1e40af;
+    --color-card-bg: #162032;
+    --color-card-border: #1E3A5F;
+    --color-card-heading: #F1F5F9;
+    --color-card-body: #CBD5E1;
+    --color-card-caption: #94A3B8;
+    --color-icon-bright: #52B788;
+    --color-icon-bg: #052e16;
+  }
 }
 
-html.dark body {
+.dark {
+  color-scheme: dark;
+}
+
+.dark body {
   background-color: #0f172a;
   color: #f1f5f9;
 }
